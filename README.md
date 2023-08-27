@@ -58,3 +58,48 @@ git push origin <branch>
 ```
 
 For more advanced scenarios or if you're using different authentication methods (SSH keys, access tokens), the commands might vary slightly. Make sure to adapt the commands to your specific use case.
+
+
+*****************************************************************************************************************************************************************************************************
+
+Sure, here's how you can create a new branch and push code to GitHub using Git commands:
+
+1. **Create a New Branch**:
+   To create a new branch and switch to it, use the following command. Replace `<new-branch-name>` with the name you want to give your new branch:
+
+   ```bash
+   git checkout -b <new-branch-name>
+   ```
+
+2. **Make Changes and Commit**:
+   Make your changes to the code, stage them, and commit as usual:
+
+   ```bash
+   git add .
+   git commit -m "Your commit message here"
+   ```
+
+3. **Push New Branch to GitHub**:
+   When you're ready to push the new branch to GitHub, use the following command. Replace `<new-branch-name>` with the name of your new branch:
+
+   ```bash
+   git push origin <new-branch-name>
+   ```
+
+   If the branch doesn't exist on the remote (GitHub) repository, this command will create the branch and push your changes to it.
+
+So, here's the complete sequence of commands:
+
+```bash
+# Create a new branch and switch to it
+git checkout -b <new-branch-name>
+
+# Make changes, stage, and commit
+git add .
+git commit -m "Your commit message here"
+
+# Push the new branch to GitHub
+git push origin <new-branch-name>
+```
+
+This will create a new branch, add your changes, commit them, and then push the new branch along with the changes to your GitHub repository.
