@@ -1,0 +1,7 @@
+To install Gobally: npm install -g packagename
+
+To check for the out dated package: npm outdated
+
+
+to remove the pakage: npm uninstall packagename
+to remove gobally: npm unistall -g packagename
