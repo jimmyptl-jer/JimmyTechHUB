@@ -61,6 +61,13 @@ Visit [http://localhost:3000](http://localhost:3000) in your web browser.
 - `PORT`: The port on which the server will run.
 - `JWT_SECRET`: Secret key for JWT token generation and verification.
 
+- TO generate the token 
+require('crypto').randomBytes(64).toString('hex');
+'148a06d4a3b6ef214b02a43414cdfd25b878b1422220dc0c01c3bb91b3b6646e1c9cff00c06e6ef591406a88acba938d25abc4ac0db69065585a0db5fb491999'
+> require('crypto').randomBytes(64).toString('hex');
+'eebec0ee58db22007b4f37fd2cf86f1c7c229360d0ea69afa921044c424737adb495847eef1c6c5654fcba0c608eb27412ad32127e59e1163eaefd64b14db41c'
+
+
 Certainly! Let's break down the purpose of each file in the provided file structure:
 
 ### 1. `index.js`
