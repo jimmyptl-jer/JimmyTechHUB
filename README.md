@@ -1,219 +1,161 @@
-`git config` is a command in Git, a distributed version control system, used to set or get configuration options for Git on your system, repository, or a specific user. Git configuration is stored in plain text files either globally for your user or locally for a specific repository.
-
-Here are some common uses of `git config`:
-
-1. **Set Global Configuration**:
-   To set your global Git configuration, use the `--global` flag. This configuration applies to all Git repositories on your system and is usually used to set your name and email address.
-
-   ```bash
-   git config --global user.name "Your Name"
-   git config --global user.email "your.email@example.com"
-   ```
-
-2. **Set Repository Configuration**:
-   To set configuration options for a specific Git repository, navigate to the repository's directory and omit the `--global` flag. These settings will only apply to the current repository.
-
-   ```bash
-   cd /path/to/your/repository
-   git config user.name "Your Name"
-   git config user.email "your.email@example.com"
-   ```
-
-3. **List Configuration Options**:
-   To list all the configuration options and their values for your current repository, use the `--list` flag.
-
-   ```bash
-   git config --list
-   ```
-
-4. **Get a Specific Configuration Option**:
-   To retrieve the value of a specific configuration option, provide its key as an argument.
-
-   ```bash
-   git config user.name
-   git config user.email
-   ```
-
-5. **Edit Configuration File Directly**:
-   You can also edit the Git configuration files directly using a text editor. The global configuration file is typically located at `~/.gitconfig`, while the local repository configuration is in `.git/config` within the repository.
-
-   ```bash
-   # Edit global configuration
-   nano ~/.gitconfig
-
-   # Edit local repository configuration
-   nano /path/to/your/repository/.git/config
-   ```
-
-6. **Remove Configuration Option**:
-   To remove a specific configuration option, use the `--unset` flag.
-
-   ```bash
-   git config --unset user.name
-   ```
-
-These are some common use cases for `git config`. It allows you to customize various aspects of how Git behaves, including your identity, default editor, preferred merge tool, and more. Customizing Git configuration can help you work more efficiently and maintain consistency across your Git projects.
-
-
-To push code to a GitHub repository, you need to use Git commands. Here's a step-by-step guide:
-
-1. **Initialize Git Repository (if not already done)**:
-   If you haven't initialized a Git repository in your project folder, you need to do this first. Open a terminal/command prompt and navigate to your project folder, then run:
-
-   ```bash
-   git init
-   ```
-
-2. **Add Files to Staging Area**:
-   Stage the files you want to commit by using the `git add` command. You can add specific files or use `.` to add all files in the current directory.
-
-   ```bash
-   git add .
-   ```
-
-3. **Commit Changes**:
-   Commit the staged changes with a descriptive message using the `git commit` command:
-
-   ```bash
-   git commit -m "Your commit message here"
-   ```
-
-4. **Link to GitHub Repository**:
-   If you haven't linked your local repository to the GitHub repository, you need to add the remote URL. Replace `<username>` with your GitHub username and `<repository>` with your repository name.
-
-   ```bash
-   git remote add origin https://github.com/<username>/<repository>.git
-   ```
-
-5. **Push Changes to GitHub**:
-   Finally, push your committed changes to GitHub using the `git push` command. Replace `<branch>` with the branch you want to push to (usually `main` or `master`):
-
-   ```bash
-   git push origin <branch>
-   ```
-
-6. **Enter Credentials**:
-   If prompted, enter your GitHub username and password/token for authentication. To avoid entering credentials each time, consider using an SSH key or a personal access token.
-
-Here's the entire sequence of commands:
-
-```bash
-# Run these commands once if the repository is not already initialized
-git init
-
-# Stage your changes
-git add .
-
-# Commit with a message
-git commit -m "Your commit message here"
-
-# Link to your GitHub repository
-git remote add origin https://github.com/<username>/<repository>.git
-
-# Push changes to GitHub
-git push origin <branch>
-```
-
-For more advanced scenarios or if you're using different authentication methods (SSH keys, access tokens), the commands might vary slightly. Make sure to adapt the commands to your specific use case.
-
-
-*****************************************************************************************************************************************************************************************************
-
-How you can create a new branch and push code to GitHub using Git commands:
-
-1. **Create a New Branch**:
-   To create a new branch and switch to it, use the following command. Replace `<new-branch-name>` with the name you want to give your new branch:
-
-   ```bash
-   git checkout -b <new-branch-name>
-   ```
-
-2. **Make Changes and Commit**:
-   Make your changes to the code, stage them, and commit as usual:
-
-   ```bash
-   git add .
-   git commit -m "Your commit message here"
-   ```
-
-3. **Push New Branch to GitHub**:
-   When you're ready to push the new branch to GitHub, use the following command. Replace `<new-branch-name>` with the name of your new branch:
-
-   ```bash
-   git push origin <new-branch-name>
-   ```
-
-   If the branch doesn't exist on the remote (GitHub) repository, this command will create the branch and push your changes to it.
-
-So, here's the complete sequence of commands:
-
-```bash
-# Create a new branch and switch to it
-git checkout -b <new-branch-name>
-
-# Make changes, stage, and commit
-git add .
-git commit -m "Your commit message here"
-
-# Push the new branch to GitHub
-git push origin <new-branch-name>
-```
-
-This will create a new branch, add your changes, commit them, and then push the new branch along with the changes to your GitHub repository.
-
-
-*****************************************************************************************************************************************************************************
-
-Merging two repositories can be a bit complex, especially if they have divergent histories or if you want to preserve all historical data. Here's a general outline of how you might go about merging two repositories:
-
-1. **Clone Both Repositories**:
-   Clone both repositories to your local machine. You'll need the URLs of both repositories.
-
-   ```bash
-   # Clone first repository
-   git clone <repository1_url> repo1
-
-   # Clone second repository
-   git clone <repository2_url> repo2
-   ```
-
-2. **Combine Repositories**:
-   Navigate into the directory of one repository (e.g., `repo1`) and add the other repository as a remote.
-
-   ```bash
-   cd repo1
-   git remote add repo2-remote ../repo2
-   ```
-
-3. **Fetch and Merge**:
-   Fetch the commits from the remote repository and merge them into your current repository's branch (e.g., `main`).
-
-   ```bash
-   git fetch repo2-remote
-   git merge repo2-remote/main
-   ```
-
-   Handle any conflicts that arise during the merge.
-
-4. **Resolve Conflicts**:
-   If there are conflicts, resolve them by editing the conflicted files, then commit the resolved changes.
-
-   ```bash
-   git add .
-   git commit -m "Merged repository2 into repository1"
-   ```
-
-5. **Repeat for Other Branches**:
-   If you have multiple branches in the second repository that you want to merge, repeat the fetch and merge steps for each branch.
-
-6. **Preserve History (Optional)**:
-   If you want to preserve the entire history of both repositories, consider using `git filter-repo` or other specialized tools to create a new repository that includes the complete history of both repositories. This can be complex and may require some expertise.
-
-7. **Update Remote**:
-   After merging and resolving conflicts, you can push the changes to the remote repository.
-
-   ```bash
-   git push origin main
-   ```
-
-Remember that merging repositories can lead to complications, especially if the repositories have significant differences in their histories. It's important to carefully plan and back up your data before attempting such a merge. If you're not comfortable with these steps, consider seeking assistance from someone experienced in Git or version control.
+# DevOps Mastery Plan - October 2024 to March 2025
+
+## Current Status Assessment
+✅ **AWS Solutions Architect Associate** - Completed  
+🔄 **AWS Developer Associate** - Almost completed  
+🎯 **Target**: DevOps Mastery by March 2025
+
+---
+
+## Monthly Learning Plan
+
+| Month | Focus Area | Core Topics | Hands-On Projects | Certifications/Goals |
+|-------|------------|-------------|-------------------|---------------------|
+| **October 2024** | **Foundation & Containerization** | • Linux administration deep-dive<br>• Docker mastery<br>• Git workflow optimization<br>• Bash/Python scripting | • Containerize a multi-tier application<br>• Set up Docker registry<br>• Create Docker Compose for microservices | Complete AWS Developer Associate |
+| **November 2024** | **CI/CD & Pipeline Automation** | • GitHub Actions/GitLab CI<br>• Jenkins fundamentals<br>• Pipeline security<br>• Automated testing integration | • Build end-to-end CI/CD pipeline<br>• Implement automated testing<br>• Set up staging/production workflows | Target: Jenkins certification or equivalent |
+| **December 2024** | **Container Orchestration** | • Kubernetes deep-dive<br>• Helm charts<br>• Service mesh basics<br>• Pod security policies | • Deploy apps to EKS<br>• Create Helm charts<br>• Implement auto-scaling<br>• Set up ingress controllers | CKA (Certified Kubernetes Administrator) preparation |
+| **January 2025** | **Infrastructure as Code** | • Terraform advanced concepts<br>• CloudFormation<br>• Ansible basics<br>• State management | • Full AWS infrastructure with Terraform<br>• Multi-environment deployments<br>• Terraform modules creation | HashiCorp Terraform Associate |
+| **February 2025** | **Monitoring & Observability** | • Prometheus & Grafana<br>• ELK/EFK stack<br>• AWS CloudWatch advanced<br>• Alerting strategies | • Complete monitoring stack<br>• Custom dashboards<br>• Log aggregation pipeline<br>• SLA/SLO implementation | AWS DevOps Engineer Professional (start prep) |
+| **March 2025** | **Advanced DevOps & Portfolio** | • GitOps with ArgoCD<br>• Security scanning<br>• Cost optimization<br>• Disaster recovery | • Complete portfolio project<br>• Production-ready deployments<br>• Security hardening<br>• Documentation | AWS DevOps Engineer Professional |
+
+---
+
+## Weekly Study Schedule
+
+| Day | Time Allocation | Activity Type |
+|-----|----------------|---------------|
+| **Monday** | 2 hours | Theory & Documentation |
+| **Tuesday** | 2 hours | Hands-on Labs |
+| **Wednesday** | 1.5 hours | Practice Projects |
+| **Thursday** | 2 hours | New Tool Learning |
+| **Friday** | 1.5 hours | Review & Troubleshooting |
+| **Saturday** | 3 hours | Major Project Work |
+| **Sunday** | 1 hour | Planning & Blog Writing |
+
+**Total Weekly Time: 13 hours**
+
+---
+
+## Detailed Monthly Breakdown
+
+### October 2024: Foundation & Containerization
+#### Week 1-2: Linux & Scripting Mastery
+- **Topics**: Advanced Linux commands, process management, networking, systemd
+- **Practice**: Create automation scripts for server management
+- **Resources**: Linux Academy, Red Hat documentation
+
+#### Week 3-4: Docker Deep Dive
+- **Topics**: Multi-stage builds, security best practices, optimization techniques
+- **Practice**: Containerize complex applications, optimize image sizes
+- **Milestone**: Deploy containerized app to AWS ECS
+
+### November 2024: CI/CD & Pipeline Automation
+#### Week 1-2: GitHub Actions Mastery
+- **Topics**: Workflows, secrets management, matrix builds, custom actions
+- **Practice**: Build complex CI/CD pipelines with multiple environments
+- **Integration**: Connect with AWS services (ECR, ECS, Lambda)
+
+#### Week 3-4: Jenkins & Advanced CI/CD
+- **Topics**: Jenkinsfile, Blue Ocean, pipeline security, plugin ecosystem
+- **Practice**: Set up Jenkins on EC2, create declarative pipelines
+- **Milestone**: Automated deployment to multiple AWS accounts
+
+### December 2024: Container Orchestration
+#### Week 1-2: Kubernetes Fundamentals
+- **Topics**: Architecture, networking, storage, security
+- **Practice**: Deploy applications to EKS, manage cluster resources
+- **Tools**: kubectl, eksctl, AWS Load Balancer Controller
+
+#### Week 3-4: Advanced Kubernetes
+- **Topics**: Helm charts, operators, service mesh (Istio), monitoring
+- **Practice**: Create production-ready Kubernetes deployments
+- **Milestone**: Full microservices deployment with monitoring
+
+### January 2025: Infrastructure as Code
+#### Week 1-2: Terraform Advanced
+- **Topics**: Modules, state management, workspaces, best practices
+- **Practice**: Multi-account AWS infrastructure, remote state
+- **Integration**: Terraform with CI/CD pipelines
+
+#### Week 3-4: Configuration Management
+- **Topics**: Ansible playbooks, CloudFormation, AWS CDK basics
+- **Practice**: Server configuration automation, immutable infrastructure
+- **Milestone**: Complete IaC setup for production workloads
+
+### February 2025: Monitoring & Observability
+#### Week 1-2: Prometheus & Grafana
+- **Topics**: Metrics collection, alert rules, dashboard creation
+- **Practice**: Monitor Kubernetes clusters and applications
+- **Integration**: Connect with AWS CloudWatch and other data sources
+
+#### Week 3-4: Logging & Tracing
+- **Topics**: ELK stack, Fluentd, distributed tracing, log analysis
+- **Practice**: Centralized logging solution, troubleshooting workflows
+- **Milestone**: Complete observability stack implementation
+
+### March 2025: Advanced DevOps & Portfolio
+#### Week 1-2: GitOps & Security
+- **Topics**: ArgoCD, security scanning (Trivy, Snyk), compliance
+- **Practice**: GitOps workflows, automated security testing
+- **Integration**: Security as code, policy as code
+
+#### Week 3-4: Portfolio & Certification
+- **Topics**: Cost optimization, disaster recovery, documentation
+- **Practice**: Complete portfolio project, prepare for interviews
+- **Milestone**: AWS DevOps Engineer Professional certification
+
+---
+
+## Portfolio Project Timeline
+
+### Project: "E-Commerce Platform DevOps Pipeline"
+**Architecture**: React frontend + Node.js API + PostgreSQL + Redis
+
+| Phase | Timeline | Deliverables |
+|-------|----------|--------------|
+| **Phase 1** | Oct-Nov | Containerized application, basic CI/CD |
+| **Phase 2** | Dec | Kubernetes deployment, monitoring setup |
+| **Phase 3** | Jan | Infrastructure as Code, multi-environment |
+| **Phase 4** | Feb-Mar | Advanced monitoring, security, documentation |
+
+---
+
+## Resource Recommendations
+
+### Books
+- "The DevOps Handbook" by Gene Kim
+- "Kubernetes in Action" by Marko Lukša
+- "Terraform: Up & Running" by Yevgeniy Brikman
+
+### Online Platforms
+- **A Cloud Guru / Linux Academy** - Comprehensive courses
+- **KodeKloud** - Hands-on labs for Kubernetes, Docker
+- **Udemy** - Specific technology deep-dives
+- **YouTube**: TechWorld with Nana, DevOps Toolkit
+
+### Practice Environments
+- **AWS Free Tier** - Your primary cloud environment
+- **Kind/Minikube** - Local Kubernetes testing
+- **GitHub Codespaces** - Development environments
+- **Katacoda** - Interactive scenarios
+
+---
+
+## Success Metrics & Milestones
+
+### Monthly Check-ins
+- [ ] **October**: Docker mastery + AWS Dev Associate completion
+- [ ] **November**: Working CI/CD pipeline deployed
+- [ ] **December**: Production Kubernetes cluster running
+- [ ] **January**: Complete IaC implementation
+- [ ] **February**: Full monitoring stack operational
+- [ ] **March**: Portfolio complete + DevOps Professional cert
+
+### Key Performance Indicators
+- **Technical Skills**: 8+ tools mastered with hands-on experience
+- **Certifications**: 3-4 industry certifications completed
+- **Portfolio**: 1 comprehensive project showcasing all skills
+- **Network**: Active in DevOps community, blog posts written
+- **Job Ready**: Confident in DevOps interviews and real-world scenarios
+
+---
