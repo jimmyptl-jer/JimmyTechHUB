@@ -33,11 +33,66 @@ Build a production-grade serverless e-commerce REST API with complete infrastruc
 
 ### **Architecture Diagram**
 ```
-Internet → CloudFront → API Gateway → Lambda Functions
-                                    ↓
-                               DynamoDB Tables
-                                    ↓
-                            CloudWatch Logs/Metrics
+                   ┌────────────────────────────┐
+                   │          Users             │
+                   │ (Web, Mobile, Admin Panel)│
+                   └─────────────┬────────────┘
+                                 │ HTTPS Requests
+                                 ▼
+                   ┌────────────────────────────┐
+                   │       Amazon CloudFront     │
+                   │ (CDN for caching static    │
+                   │  content, reduces latency) │
+                   └─────────────┬────────────┘
+                                 │ Forward requests
+                                 ▼
+                   ┌────────────────────────────┐
+                   │       Amazon API Gateway    │
+                   │ (REST/HTTP API for routing │
+                   │  requests to Lambda, auth  │
+                   │  & throttling, caching)    │
+                   └─────────────┬────────────┘
+                                 │ Trigger Lambda functions
+           ┌─────────────────────┼─────────────────────┐
+           │                     │                     │
+           ▼                     ▼                     ▼
+ ┌─────────────────┐     ┌─────────────────┐    ┌─────────────────┐
+ │   Auth Lambda   │     │ Product Lambda  │    │ Order Lambda    │
+ │ (JWT, OAuth2,  │     │ (CRUD, inventory│    │ (Create, Update,│
+ │   Sign-in/Up)  │     │  management)    │    │  payment)       │
+ └─────────────────┘     └─────────────────┘    └─────────────────┘
+           │                     │                     │
+           │                     │                     │
+           ▼                     ▼                     ▼
+    ┌──────────────┐       ┌──────────────┐       ┌──────────────┐
+    │ DynamoDB     │       │ DynamoDB     │       │ DynamoDB     │
+    │ Users Table  │       │ Products     │       │ Orders Table │
+    │ (PK: userId) │       │ Table (PK:   │       │ (PK: orderId)│
+    │ GSI: email   │       │ productId)   │       │ GSI: userId) │
+    └──────────────┘       └──────────────┘       └──────────────┘
+           │                     │                     │
+           └─────────────┬───────┴───────┬─────────────┘
+                         ▼               ▼
+                  ┌─────────────────────────┐
+                  │ Amazon S3 (Optional)    │
+                  │ - Product Images        │
+                  │ - Static Assets         │
+                  └─────────────┬───────────┘
+                                │ Logs / Metrics
+                                ▼
+                   ┌────────────────────────────┐
+                   │   Amazon CloudWatch        │
+                   │ - Lambda metrics & logs    │
+                   │ - API Gateway metrics      │
+                   │ - Alarms & dashboards      │
+                   └─────────────┬────────────┘
+                                 │ Optional Tracing
+                                 ▼
+                   ┌────────────────────────────┐
+                   │       AWS X-Ray            │
+                   │ - Distributed tracing for │
+                   │   Lambda & API Gateway     │
+                   └────────────────────────────┘
 ```
 
 ### **Required Reading & Documentation**
