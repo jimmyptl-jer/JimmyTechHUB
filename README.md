@@ -33,66 +33,11 @@ Build a production-grade serverless e-commerce REST API with complete infrastruc
 
 ### **Architecture Diagram**
 ```
-                   ┌────────────────────────────┐
-                   │          Users             │
-                   │ (Web, Mobile, Admin Panel)│
-                   └─────────────┬────────────┘
-                                 │ HTTPS Requests
-                                 ▼
-                   ┌────────────────────────────┐
-                   │       Amazon CloudFront     │
-                   │ (CDN for caching static    │
-                   │  content, reduces latency) │
-                   └─────────────┬────────────┘
-                                 │ Forward requests
-                                 ▼
-                   ┌────────────────────────────┐
-                   │       Amazon API Gateway    │
-                   │ (REST/HTTP API for routing │
-                   │  requests to Lambda, auth  │
-                   │  & throttling, caching)    │
-                   └─────────────┬────────────┘
-                                 │ Trigger Lambda functions
-           ┌─────────────────────┼─────────────────────┐
-           │                     │                     │
-           ▼                     ▼                     ▼
- ┌─────────────────┐     ┌─────────────────┐    ┌─────────────────┐
- │   Auth Lambda   │     │ Product Lambda  │    │ Order Lambda    │
- │ (JWT, OAuth2,  │     │ (CRUD, inventory│    │ (Create, Update,│
- │   Sign-in/Up)  │     │  management)    │    │  payment)       │
- └─────────────────┘     └─────────────────┘    └─────────────────┘
-           │                     │                     │
-           │                     │                     │
-           ▼                     ▼                     ▼
-    ┌──────────────┐       ┌──────────────┐       ┌──────────────┐
-    │ DynamoDB     │       │ DynamoDB     │       │ DynamoDB     │
-    │ Users Table  │       │ Products     │       │ Orders Table │
-    │ (PK: userId) │       │ Table (PK:   │       │ (PK: orderId)│
-    │ GSI: email   │       │ productId)   │       │ GSI: userId) │
-    └──────────────┘       └──────────────┘       └──────────────┘
-           │                     │                     │
-           └─────────────┬───────┴───────┬─────────────┘
-                         ▼               ▼
-                  ┌─────────────────────────┐
-                  │ Amazon S3 (Optional)    │
-                  │ - Product Images        │
-                  │ - Static Assets         │
-                  └─────────────┬───────────┘
-                                │ Logs / Metrics
-                                ▼
-                   ┌────────────────────────────┐
-                   │   Amazon CloudWatch        │
-                   │ - Lambda metrics & logs    │
-                   │ - API Gateway metrics      │
-                   │ - Alarms & dashboards      │
-                   └─────────────┬────────────┘
-                                 │ Optional Tracing
-                                 ▼
-                   ┌────────────────────────────┐
-                   │       AWS X-Ray            │
-                   │ - Distributed tracing for │
-                   │   Lambda & API Gateway     │
-                   └────────────────────────────┘
+Internet → CloudFront → API Gateway → Lambda Functions
+                                    ↓
+                               DynamoDB Tables
+                                    ↓
+                            CloudWatch Logs/Metrics
 ```
 
 ### **Required Reading & Documentation**
@@ -691,252 +636,666 @@ global-static-website/
 
 ---
 
-## 🏗️ **JANUARY 2025: EVENT-DRIVEN MICROSERVICES PLATFORM (CONTINUED)**
+## 🏗️ **JANUARY 2025: EVENT-DRIVEN MICROSERVICES PLATFORM**
 
 ### **Project Overview**
-
-Build a sophisticated event-driven microservices platform using Amazon EKS, SQS, SNS, EventBridge, and implement service mesh with AWS App Mesh. Focus on scalability, observability, and resilient architecture.
-
-### **Architecture Diagram**
-
-```
-API Gateway → Lambda → EventBridge → Microservices (EKS Pods)
-                  ↓                 ↓
-                SNS/SQS           RDS/DynamoDB
-                  ↓                 ↓
-               CloudWatch & X-Ray Monitoring
-                  ↓
-              App Mesh (Service-to-service communication)
-```
+Build a sophisticated event-driven microservices platform using Amazon EKS, SQS, SNS, EventBridge, and implement service mesh with AWS App Mesh.
 
 ### **Required Reading & Documentation**
 
-#### **Core AWS Services**
-
+#### **Core Technologies**
 1. **Amazon EKS**
+   - 📖 [EKS User Guide](https://docs.aws.amazon.com/eks/latest/userguide/)
+   - 📖 [EKS Best Practices Guide](https://aws.github.io/aws-eks-best-practices/)
+   - 📖 [EKS Managed Node Groups](https://docs.aws.amazon.com/eks/latest/userguide/managed-node-groups.html)
+   - 📖 [EKS Fargate](https://docs.aws.amazon.com/eks/latest/userguide/fargate.html)
+   - 📖 [AWS Load Balancer Controller](https://kubernetes-sigs.github.io/aws-load-balancer-controller/)
 
-   * 📖 [EKS User Guide](https://docs.aws.amazon.com/eks/latest/userguide/)
-   * 📖 [EKS Best Practices Guide](https://aws.github.io/aws-eks-best-practices/)
-   * 📖 [Kubernetes Networking on EKS](https://docs.aws.amazon.com/eks/latest/userguide/networking.html)
+2. **Event-Driven Architecture**
+   - 📖 [Amazon SQS Developer Guide](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/)
+   - 📖 [Amazon SNS Developer Guide](https://docs.aws.amazon.com/sns/latest/dg/)
+   - 📖 [Amazon EventBridge User Guide](https://docs.aws.amazon.com/eventbridge/latest/userguide/)
+   - 📖 [Event-Driven Architecture Patterns](https://aws.amazon.com/event-driven-architecture/)
 
-2. **Amazon SQS & SNS**
+3. **Service Mesh**
+   - 📖 [AWS App Mesh User Guide](https://docs.aws.amazon.com/app-mesh/latest/userguide/)
+   - 📖 [Istio Documentation](https://istio.io/latest/docs/) (Alternative option)
+   - 📖 [Service Mesh Patterns](https://www.nginx.com/blog/what-is-a-service-mesh/)
 
-   * 📖 [SQS Developer Guide](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/)
-   * 📖 [SNS Developer Guide](https://docs.aws.amazon.com/sns/latest/dg/)
-   * 📖 [SQS/SNS Patterns](https://docs.aws.amazon.com/architecture-patterns/latest/event-driven/sqs-sns.html)
-
-3. **Amazon EventBridge**
-
-   * 📖 [EventBridge Developer Guide](https://docs.aws.amazon.com/eventbridge/latest/userguide/)
-   * 📖 [EventBridge Best Practices](https://docs.aws.amazon.com/architecture-patterns/latest/event-driven/overview.html)
-
-4. **AWS App Mesh**
-
-   * 📖 [App Mesh Developer Guide](https://docs.aws.amazon.com/app-mesh/latest/userguide/what-is-app-mesh.html)
-   * 📖 [Service Mesh Design Patterns](https://aws.github.io/aws-app-mesh-best-practices/)
-
-#### **Advanced Terraform Patterns**
-
-* 📖 [Terraform Modules for Microservices](https://learn.hashicorp.com/collections/terraform/modules)
-* 📖 [Terraform EKS Module](https://registry.terraform.io/modules/terraform-aws-modules/eks/aws/latest)
-* 📖 [Terraform SQS/SNS/EventBridge Modules](https://github.com/terraform-aws-modules)
+4. **Kubernetes Advanced**
+   - 📖 [Kubernetes Official Documentation](https://kubernetes.io/docs/)
+   - 📖 [Helm Documentation](https://helm.sh/docs/)
+   - 📖 [Kubernetes Operators](https://kubernetes.io/docs/concepts/extend-kubernetes/operator/)
+   - 📖 [Kubernetes Security Best Practices](https://kubernetes.io/docs/concepts/security/)
 
 ### **Project Deliverables**
 
-#### **Repository Structure**
-
+#### **Microservices Platform Architecture**
 ```
-event-driven-platform/
+event-driven-microservices/
 ├── README.md
 ├── .github/
 │   └── workflows/
-│       ├── build-and-test.yml
-│       ├── deploy-dev.yml
-│       ├── deploy-staging.yml
-│       └── deploy-prod.yml
-├── terraform/
-│   ├── modules/
-│   │   ├── eks/
-│   │   ├── sqs/
-│   │   ├── sns/
-│   │   ├── eventbridge/
-│   │   └── appmesh/
-│   ├── environments/
-│   │   ├── dev/
-│   │   ├── staging/
-│   │   └── prod/
-│   └── shared/
-├── microservices/
-│   ├── auth-service/
-│   ├── product-service/
-│   ├── order-service/
-│   └── payment-service/
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   └── load/
-├── monitoring/
-│   ├── dashboards/
-│   ├── alarms/
-│   └── tracing/
-└── docs/
-    ├── architecture.md
-    ├── deployment-guide.md
-    └── runbook.md
-```
-
----
-
-## 🏗️ **FEBRUARY 2025: INFRASTRUCTURE AUTOMATION & GITOPS**
-
-### **Project Overview**
-
-Implement full Infrastructure as Code (IaC) and GitOps pipelines using Terraform, ArgoCD, FluxCD, and AWS CloudFormation. Focus on automated, repeatable, and version-controlled deployments.
-
-### **Architecture Diagram**
-
-```
-Git Repository → ArgoCD/FluxCD → Terraform/CloudFormation → AWS Services
-                                      ↓
-                                  Continuous Deployment
-                                      ↓
-                                  Monitoring & Alerts
-```
-
-### **Required Reading & Documentation**
-
-#### **Terraform & CloudFormation**
-
-* 📖 [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-* 📖 [CloudFormation User Guide](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/)
-* 📖 [Terraform CI/CD with GitOps](https://learn.hashicorp.com/tutorials/terraform/gitops)
-
-#### **GitOps Tools**
-
-1. **ArgoCD**
-
-   * 📖 [ArgoCD Documentation](https://argo-cd.readthedocs.io/)
-   * 📖 [GitOps Best Practices](https://www.weave.works/technologies/gitops/)
-2. **FluxCD**
-
-   * 📖 [FluxCD Documentation](https://fluxcd.io/docs/)
-   * 📖 [FluxCD Automation Patterns](https://fluxcd.io/docs/)
-
-### **Project Deliverables**
-
-```
-infrastructure-gitops/
-├── README.md
-├── .github/
-│   └── workflows/
-│       ├── terraform-plan.yml
-│       └── terraform-apply.yml
-├── terraform/
-│   ├── modules/
-│   │   ├── networking/
-│   │   ├── compute/
-│   │   └── storage/
-│   ├── environments/
-│   │   ├── dev/
-│   │   ├── staging/
-│   │   └── prod/
-├── cloudformation/
-│   ├── s3/
-│   ├── ecs/
-│   └── eks/
-├── argocd/
-│   └── apps/
-├── fluxcd/
-│   └── apps/
-└── docs/
-    ├── deployment-guide.md
-    ├── gitops-strategy.md
-    └── monitoring.md
-```
-
-**Learning Outcomes**
-
-* ✅ Complete GitOps workflow with automated deployments
-* ✅ Advanced Terraform modularization
-* ✅ CloudFormation templates for repeatable stacks
-* ✅ Multi-environment infrastructure automation
-* ✅ Observability & monitoring pipelines
-
----
-
-## 🏗️ **MARCH 2025: MONITORING, SECURITY & OPTIMIZATION**
-
-### **Project Overview**
-
-Focus on monitoring, observability, security hardening, and cost optimization of all previous projects. Use CloudWatch, CloudTrail, GuardDuty, AWS Config, and cost optimization strategies.
-
-### **Architecture Diagram**
-
-```
-AWS Services → CloudWatch Logs & Metrics
-           → CloudTrail → GuardDuty
-           → AWS Config → Security Alerts
-           → Cost Explorer & Budgets
-```
-
-### **Required Reading & Documentation**
-
-#### **Monitoring & Logging**
-
-* 📖 [CloudWatch Developer Guide](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/WhatIsCloudWatch.html)
-* 📖 [X-Ray Developer Guide](https://docs.aws.amazon.com/xray/latest/devguide/)
-* 📖 [CloudWatch Alarms & Dashboards](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/AlarmThatSendsEmail.html)
-
-#### **Security & Compliance**
-
-* 📖 [AWS Security Best Practices](https://docs.aws.amazon.com/whitepapers/latest/aws-security-best-practices/welcome.html)
-* 📖 [AWS GuardDuty Guide](https://docs.aws.amazon.com/guardduty/latest/ug/what-is-guardduty.html)
-* 📖 [AWS Config Rules](https://docs.aws.amazon.com/config/latest/developerguide/evaluate-config.html)
-
-#### **Cost Optimization**
-
-* 📖 [AWS Cost Explorer](https://docs.aws.amazon.com/cost-explorer/latest/userguide/what-is-cost-explorer.html)
-* 📖 [AWS Trusted Advisor](https://aws.amazon.com/premiumsupport/technology/trusted-advisor/)
-
-### **Project Deliverables**
-
-```
-monitoring-security-optimization/
-├── README.md
-├── terraform/
-│   ├── modules/
-│   │   ├── cloudwatch/
-│   │   ├── guardduty/
-│   │   ├── config/
-│   │   └── budgets/
-│   ├── environments/
-│   │   ├── dev/
-│   │   ├── staging/
-│   │   └── prod/
+│       ├── build-images.yml          # Build all microservice images
+│       ├── deploy-eks.yml            # Deploy EKS infrastructure
+│       ├── deploy-services.yml       # Deploy microservices
+│       └── run-tests.yml            # Integration and E2E tests
+├── infrastructure/
+│   └── terraform/
+│       ├── modules/
+│       │   ├── eks/                  # EKS cluster with managed node groups
+│       │   ├── vpc/                  # VPC with private/public subnets
+│       │   ├── sqs/                  # SQS queues for async processing
+│       │   ├── sns/                  # SNS topics for notifications
+│       │   ├── eventbridge/          # EventBridge custom bus
+│       │   ├── app-mesh/             # Service mesh configuration
+│       │   └── monitoring/           # Prometheus, Grafana, Jaeger
+│       ├── environments/
+│       │   ├── dev/
+│       │   ├── staging/
+│       │   └── prod/
+│       └── shared/
+├── services/
+│   ├── user-service/                 # User management microservice
+│   │   ├── Dockerfile
+│   │   ├── helm-chart/
+│   │   ├── src/
+│   │   ├── tests/
+│   │   └── k8s/
+│   ├── order-service/                # Order processing microservice
+│   │   ├── Dockerfile
+│   │   ├── helm-chart/
+│   │   ├── src/
+│   │   ├── tests/
+│   │   └── k8s/
+│   ├── inventory-service/            # Inventory management
+│   │   ├── Dockerfile
+│   │   ├── helm-chart/
+│   │   ├── src/
+│   │   ├── tests/
+│   │   └── k8s/
+│   ├── notification-service/         # Email/SMS notifications
+│   │   ├── Dockerfile
+│   │   ├── helm-chart/
+│   │   ├── src/
+│   │   ├── tests/
+│   │   └── k8s/
+│   └── api-gateway/                  # API Gateway service
+│       ├── Dockerfile
+│       ├── helm-chart/
+│       ├── src/
+│       ├── tests/
+│       └── k8s/
+├── k8s/
+│   ├── namespaces/                   # Kubernetes namespaces
+│   ├── ingress/                      # Ingress controllers
+│   ├── service-mesh/                 # App Mesh configurations
+│   ├── secrets/                      # Kubernetes secrets
+│   └── monitoring/                   # Monitoring stack
+├── helm-charts/
+│   ├── microservices-platform/      # Umbrella chart
+│   ├── monitoring-stack/             # Prometheus, Grafana
+│   └── service-mesh/                 # App Mesh components
 ├── scripts/
-│   ├── security-audit.sh
-│   ├── cost-report.sh
-│   └── optimize-resources.sh
-├── dashboards/
-│   ├── cloudwatch/
-│   ├── grafana/
-│   └── custom-alarms/
+│   ├── setup-cluster.sh             # EKS cluster setup
+│   ├── deploy-all.sh                # Deploy all services
+│   ├── run-load-tests.sh            # Load testing
+│   └── cleanup.sh                   # Environment cleanup
+├── monitoring/
+│   ├── prometheus/                   # Prometheus configuration
+│   ├── grafana/                      # Grafana dashboards
+│   ├── jaeger/                       # Distributed tracing
+│   └── alerts/                       # Alert manager rules
+├── tests/
+│   ├── integration/                  # Service integration tests
+│   ├── load/                        # Load testing with k6
+│   ├── chaos/                       # Chaos engineering tests
+│   └── security/                    # Security testing
 └── docs/
-    ├── monitoring-guide.md
-    ├── security-hardening.md
-    └── cost-optimization.md
+    ├── service-architecture.md
+    ├── event-flow-diagrams.md
+    ├── deployment-guide.md
+    └── troubleshooting.md
 ```
 
-**Learning Outcomes**
+#### **Key Implementation Details**
 
-* ✅ Implement comprehensive monitoring & alerting
-* ✅ Security hardening for AWS workloads
-* ✅ Auditing & compliance reporting
-* ✅ Cost optimization and resource right-sizing
-* ✅ Final project: Full production-ready DevOps ecosystem
+**EKS Terraform Module**
+```hcl
+# infrastructure/terraform/modules/eks/main.tf
+module "eks" {
+  source  = "terraform-aws-modules/eks/aws"
+  version = "~> 19.0"
+
+  cluster_name    = var.cluster_name
+  cluster_version = "1.28"
+
+  vpc_id                         = var.vpc_id
+  subnet_ids                     = var.private_subnets
+  cluster_endpoint_public_access = true
+
+  eks_managed_node_groups = {
+    main = {
+      name = "main"
+
+      instance_types = ["m6i.large", "m5.large", "m5n.large", "m5zn.large"]
+      
+      min_size     = 2
+      max_size     = 10
+      desired_size = 3
+
+      pre_bootstrap_user_data = <<-EOT
+        #!/bin/bash
+        /etc/eks/bootstrap.sh ${var.cluster_name}
+      EOT
+
+      vpc_security_group_ids = [aws_security_group.node_group_one.id]
+    }
+  }
+
+  # Fargate profiles
+  fargate_profiles = {
+    default = {
+      name = "default"
+      selectors = [
+        {
+          namespace = "default"
+          labels = {
+            "app.kubernetes.io/managed-by" = "fargate"
+          }
+        }
+      ]
+
+      tags = {
+        Owner = "default"
+      }
+
+      timeouts = {
+        create = "20m"
+        delete = "20m"
+      }
+    }
+  }
+
+  # aws-auth configmap
+  manage_aws_auth_configmap = true
+
+  aws_auth_roles = [
+    {
+      rolearn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/role1"
+      username = "role1"
+      groups   = ["system:masters"]
+    },
+  ]
+
+  aws_auth_users = [
+    {
+      userarn  = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:user/user1"
+      username = "user1"
+      groups   = ["system:masters"]
+    }
+  ]
+
+  tags = var.tags
+}
+```
+
+**Microservice Helm Chart Template**
+```yaml
+# services/user-service/helm-chart/templates/deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "user-service.fullname" . }}
+  labels:
+    {{- include "user-service.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "user-service.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/path: "/metrics"
+        prometheus.io/port: "3000"
+      labels:
+        {{- include "user-service.selectorLabels" . | nindent 8 }}
+    spec:
+      serviceAccountName: {{ include "user-service.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+          env:
+            - name: NODE_ENV
+              value: {{ .Values.environment }}
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "user-service.fullname" . }}-secret
+                  key: database-url
+            - name: SQS_QUEUE_URL
+              value: {{ .Values.aws.sqsQueueUrl }}
+            - name: SNS_TOPIC_ARN
+              value: {{ .Values.aws.snsTopicArn }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+```
+
+**Event-Driven Communication Pattern**
+```javascript
+// services/order-service/src/events/orderCreated.js
+const AWS = require('aws-sdk');
+const eventbridge = new AWS.EventBridge();
+const sns = new AWS.SNS();
+
+class OrderEventService {
+  async publishOrderCreated(orderData) {
+    // Publish to EventBridge for internal services
+    const eventBridgeParams = {
+      Entries: [
+        {
+          Source: 'ecommerce.order-service',
+          DetailType: 'Order Created',
+          Detail: JSON.stringify({
+            orderId: orderData.id,
+            userId: orderData.userId,
+            items: orderData.items,
+            totalAmount: orderData.totalAmount,
+            timestamp: new Date().toISOString()
+          }),
+          EventBusName: 'ecommerce-event-bus'
+        }
+      ]
+    };
+    
+    await eventbridge.putEvents(eventBridgeParams).promise();
+
+    // Publish to SNS for external notifications
+    const snsParams = {
+      TopicArn: process.env.ORDER_NOTIFICATIONS_TOPIC_ARN,
+      Message: JSON.stringify({
+        type: 'order_created',
+        orderId: orderData.id,
+        customerEmail: orderData.customerEmail,
+        orderDetails: orderData
+      }),
+      MessageAttributes: {
+        eventType: {
+          DataType: 'String',
+          StringValue: 'order_created'
+        }
+      }
+    };
+    
+    await sns.publish(snsParams).promise();
+  }
+
+  async handleInventoryUpdate(sqsMessage) {
+    // Process inventory update from SQS
+    const inventoryData = JSON.parse(sqsMessage.Body);
+    
+    // Update order status based on inventory availability
+    // Send notifications if needed
+  }
+}
+
+module.exports = OrderEventService;
+```
 
 ---
 
-This completes your **6-month AWS Developer + DevOps roadmap with projects**, from **October 2024 → March 2025**.
+## 🔄 **FEBRUARY 2025: AWS NATIVE CI/CD PIPELINE**
+
+### **Project Overview**
+Master AWS-native DevOps tools by building a comprehensive CI/CD pipeline using CodeCommit, CodeBuild, CodeDeploy, and CodePipeline with cross-account deployment capabilities.
+
+### **Required Reading & Documentation**
+
+#### **AWS Developer Tools**
+1. **AWS CodeCommit**
+   - 📖 [CodeCommit User Guide](https://docs.aws.amazon.com/codecommit/latest/userguide/)
+   - 📖 [CodeCommit Security Best Practices](https://docs.aws.amazon.com/codecommit/latest/userguide/security-best-practices.html)
+   - 📖 [Git with CodeCommit](https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up.html)
+
+2. **AWS CodeBuild**
+   - 📖 [CodeBuild User Guide](https://docs.aws.amazon.com/codebuild/latest/userguide/)
+   - 📖 [CodeBuild Buildspec Reference](https://docs.aws.amazon.com/codebuild/latest/userguide/build-spec-ref.html)
+   - 📖 [CodeBuild Environment Images](https://docs.aws.amazon.com/codebuild/latest/userguide/build-env-ref-available.html)
+   - 📖 [Custom CodeBuild Images](https://docs.aws.amazon.com/codebuild/latest/userguide/sample-docker-custom-image.html)
+
+3. **AWS CodeDeploy**
+   - 📖 [CodeDeploy User Guide](https://docs.aws.amazon.com/codedeploy/latest/userguide/)
+   - 📖 [CodeDeploy Deployment Configurations](https://docs.aws.amazon.com/codedeploy/latest/userguide/deployment-configurations.html)
+   - 📖 [Blue/Green Deployments](https://docs.aws.amazon.com/codedeploy/latest/userguide/welcome.html#deployment-types)
+
+4. **AWS CodePipeline**
+   - 📖 [CodePipeline User Guide](https://docs.aws.amazon.com/codepipeline/latest/userguide/)
+   - 📖 [Pipeline Structure Reference](https://docs.aws.amazon.com/codepipeline/latest/userguide/reference-pipeline-structure.html)
+   - 📖 [Cross-Account Pipeline](https://docs.aws.amazon.com/codepipeline/latest/userguide/pipelines-create-cross-account.html)
+
+### **Project Deliverables**
+
+#### **Complete AWS CI/CD Platform**
+```
+aws-native-cicd/
+├── README.md
+├── infrastructure/
+│   └── terraform/
+│       ├── modules/
+│       │   ├── codecommit/           # Git repositories
+│       │   ├── codebuild/            # Build projects
+│       │   ├── codedeploy/           # Deployment applications
+│       │   ├── codepipeline/         # Pipeline configurations
+│       │   ├── s3-artifacts/         # Artifact storage
+│       │   ├── iam/                  # Cross-account roles
+│       │   └── monitoring/           # Pipeline monitoring
+│       ├── accounts/
+│       │   ├── tools/                # CI/CD tools account
+│       │   ├── dev/                  # Development account
+│       │   ├── staging/              # Staging account
+│       │   └── prod/                 # Production account
+│       └── shared/
+├── applications/
+│   ├── web-application/              # Sample web application
+│   │   ├── src/
+│   │   ├── tests/
+│   │   ├── buildspec.yml
+│   │   ├── appspec.yml
+│   │   ├── Dockerfile
+│   │   └── scripts/
+│   ├── api-service/                  # Sample API service
+│   │   ├── src/
+│   │   ├── tests/
+│   │   ├── buildspec.yml
+│   │   ├── appspec.yml
+│   │   ├── Dockerfile
+│   │   └── scripts/
+│   └── lambda-functions/             # Serverless functions
+│       ├── src/
+│       ├── tests/
+│       ├── buildspec.yml
+│       ├── template.yaml
+│       └── scripts/
+├── pipelines/
+│   ├── web-application-pipeline.json # Web app pipeline
+│   ├── api-service-pipeline.json    # API service pipeline
+│   ├── lambda-pipeline.json         # Serverless pipeline
+│   └── infrastructure-pipeline.json # Infrastructure pipeline
+├── buildspecs/
+│   ├── build-web-app.yml            # Web application build
+│   ├── build-api.yml                # API service build
+│   ├── build-lambda.yml             # Lambda function build
+│   ├── test-integration.yml         # Integration tests
+│   ├── security-scan.yml            # Security scanning
+│   └── deploy-infrastructure.yml    # Infrastructure deployment
+├── deployment-configs/
+│   ├── blue-green-ecs.json          # ECS blue/green config
+│   ├── rolling-update-ec2.json      # EC2 rolling update
+│   └── lambda-canary.json           # Lambda canary deployment
+├── scripts/
+│   ├── setup-cross-account-roles.sh # IAM setup
+│   ├── create-pipelines.sh          # Pipeline creation
+│   ├── validate-deployment.sh       # Deployment validation
+│   └── rollback.sh                  # Rollback procedures
+├── monitoring/
+│   ├── cloudwatch-dashboards/       # Pipeline dashboards
+│   ├── alerts/                      # CloudWatch alarms
+│   └── notifications/               # SNS notifications
+└── docs/
+    ├── pipeline-architecture.md
+    ├── deployment-strategies.md
+    ├── troubleshooting-guide.md
+    └── cross-account-setup.md
+```
+
+#### **Advanced BuildSpec Examples**
+
+**Multi-Stage Build with Security Scanning**
+```yaml
+# buildspecs/build-web-app.yml
+version: 0.2
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 18
+      docker: 20
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $ECR_REPOSITORY_URI
+      - echo Installing dependencies...
+      - npm install -g @aws-cdk/cli
+      - pip install checkov  # Infrastructure security scanning
+      
+  pre_build:
+    commands:
+      - echo Pre-build started on `date`
+      - echo Logging into ECR...
+      - REPOSITORY_URI=$ECR_REPOSITORY_URI
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=latest}
+      - echo Setting up test database...
+      - docker run -d -p 5432:5432 --name test-db -e POSTGRES_PASSWORD=test postgres:13
+      
+  build:
+    commands:
+      - echo Build started on `date`
+      - echo Installing application dependencies...
+      - npm ci
+      - echo Running unit tests...
+      - npm run test:unit -- --coverage --watchAll=false
+      - echo Running linting...
+      - npm run lint
+      - echo Running security audit...
+      - npm audit --audit-level=high
+      - echo Building the application...
+      - npm run build
+      - echo Building the Docker image...
+      - docker build -t $REPOSITORY_URI:latest .
+      - docker tag $REPOSITORY_URI:latest $REPOSITORY_URI:$IMAGE_TAG
+      - echo Running container security scan...
+      - docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+        -v $PWD:/root/.cache/ aquasec/trivy:latest image \
+        --exit-code 0 --severity HIGH --light $REPOSITORY_URI:latest
+      
+  post_build:
+    commands:
+      - echo Build completed on `date`
+      - echo Running integration tests...
+      - npm run test:integration
+      - echo Pushing the Docker images...
+      - docker push $REPOSITORY_URI:latest
+      - docker push $REPOSITORY_URI:$IMAGE_TAG
+      - echo Writing image definitions file...
+      - printf '[{"name":"web-app","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - echo Generating deployment artifacts...
+      - aws s3 cp deployment-configs/ s3://$ARTIFACTS_BUCKET/deployment-configs/ --recursive
+
+artifacts:
+  files:
+    - imagedefinitions.json
+    - appspec.yml
+    - taskdef.json
+    - deployment-configs/**/*
+  secondary-artifacts:
+    test-results:
+      files:
+        - coverage/**/*
+        - test-results/**/*
+    security-reports:
+      files:
+        - security-reports/**/*
+
+reports:
+  jest-reports:
+    files:
+      - coverage/lcov.info
+    file-format: CLOVERXML
+    base-directory: coverage
+  security-reports:
+    files:
+      - security-reports/trivy-report.json
+    file-format: CUCUMBERJSON
+    base-directory: security-reports
+
+cache:
+  paths:
+    - node_modules/**/*
+    - .npm/**/*
+```
 
 ---
+
+## 🏢 **MARCH 2025: ENTERPRISE MULTI-ACCOUNT SETUP**
+
+### **Project Overview**
+Design and implement a complete enterprise-grade multi-account AWS setup using AWS Organizations, Control Tower, and advanced governance patterns.
+
+### **Required Reading & Documentation**
+
+#### **Enterprise AWS Architecture**
+1. **AWS Organizations**
+   - 📖 [AWS Organizations User Guide](https://docs.aws.amazon.com/organizations/latest/userguide/)
+   - 📖 [Service Control Policies](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_policies_scps.html)
+   - 📖 [Multi-Account Best Practices](https://docs.aws.amazon.com/whitepapers/latest/organizing-your-aws-environment/organizing-your-aws-environment.html)
+
+2. **AWS Control Tower**
+   - 📖 [Control Tower User Guide](https://docs.aws.amazon.com/controltower/latest/userguide/)
+   - 📖 [Control Tower Guardrails](https://docs.aws.amazon.com/controltower/latest/userguide/guardrails.html)
+   - 📖 [Account Factory](https://docs.aws.amazon.com/controltower/latest/userguide/account-factory.html)
+
+3. **Enterprise Monitoring & Compliance**
+   - 📖 [AWS Config User Guide](https://docs.aws.amazon.com/config/latest/developerguide/)
+   - 📖 [AWS CloudTrail User Guide](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/)
+   - 📖 [AWS Security Hub User Guide](https://docs.aws.amazon.com/securityhub/latest/userguide/)
+   - 📖 [AWS GuardDuty User Guide](https://docs.aws.amazon.com/guardduty/latest/ug/)
+
+---
+
+# 🎯 **CERTIFICATION TIMELINE & STUDY PLAN**
+
+## Certification Roadmap
+| Month | Primary Certification | Study Hours/Week | Practice Exams | Key Resources |
+|-------|----------------------|------------------|----------------|---------------|
+| **October** | AWS Developer Associate | 10 hours | 3 full practice exams | A Cloud Guru, Tutorials Dojo |
+| **November** | Start DevOps Professional prep | 8 hours | Begin practice tests | AWS Official Study Guide |
+| **December** | HashiCorp Terraform Associate | 6 hours | Terraform mock exams | HashiCorp Learn platform |
+| **January** | Continue DevOps Professional | 10 hours | Multiple practice exams | AWS Whitepapers, re:Invent videos |
+| **February** | Final DevOps Professional prep | 12 hours | Weekly practice exams | AWS Practice Questions |
+| **March** | AWS DevOps Professional EXAM | 8 hours | Final review sessions | Exam readiness assessment |
+
+---
+
+# 📊 **SUCCESS METRICS & PORTFOLIO ASSESSMENT**
+
+## Technical Portfolio Checklist
+### October - Serverless API ✅
+- [ ] Production-ready Lambda functions with proper error handling
+- [ ] DynamoDB single-table design implementation  
+- [ ] Complete Terraform infrastructure modules
+- [ ] Comprehensive CI/CD pipeline with GitHub Actions
+- [ ] Performance optimization and cost analysis
+- [ ] Security best practices implementation
+- [ ] Complete API documentation with OpenAPI spec
+
+### November - Containerized Application ✅
+- [ ] Multi-tier application on ECS Fargate
+- [ ] Database integration with RDS and ElastiCache
+- [ ] Load balancing and auto-scaling configuration
+- [ ] Blue/green deployment implementation
+- [ ] Advanced Terraform module development
+- [ ] Container security scanning and optimization
+- [ ] Comprehensive monitoring and alerting
+
+### December - Global Static Website ✅
+- [ ] Multi-region CDN deployment
+- [ ] Performance optimization (Lighthouse score >90)
+- [ ] Security headers and SSL implementation
+- [ ] Advanced caching strategies
+- [ ] Cost optimization analysis
+- [ ] Real user monitoring setup
+- [ ] Automated performance testing
+
+### January - Microservices Platform ✅
+- [ ] Production-ready EKS cluster
+- [ ] Event-driven communication patterns
+- [ ] Service mesh implementation
+- [ ] Comprehensive monitoring with Prometheus/Grafana
+- [ ] Distributed tracing with Jaeger
+- [ ] Chaos engineering implementation
+- [ ] Security policies and network segmentation
+
+### February - AWS Native CI/CD ✅
+- [ ] Cross-account deployment pipeline
+- [ ] Multiple deployment strategies (blue/green, canary)
+- [ ] Automated security scanning
+- [ ] Infrastructure as Code pipeline
+- [ ] Comprehensive testing strategy
+- [ ] Rollback and recovery procedures
+- [ ] Pipeline monitoring and optimization
+
+### March - Enterprise Setup ✅
+- [ ] Multi-account organization structure
+- [ ] Service Control Policies implementation
+- [ ] Centralized logging and monitoring
+- [ ] Compliance automation
+- [ ] Cost allocation and optimization
+- [ ] Disaster recovery procedures
+- [ ] Security posture management
+
+## Interview Readiness Checklist
+- [ ] **System Design**: Can architect scalable AWS solutions
+- [ ] **Troubleshooting**: Demonstrates problem-solving with AWS services  
+- [ ] **Security**: Implements security best practices across all projects
+- [ ] **Cost Optimization**: Shows understanding of AWS cost management
+- [ ] **Automation**: Everything is infrastructure as code and CI/CD enabled
+- [ ] **Monitoring**: Comprehensive observability in all projects
+- [ ] **Documentation**: Professional-grade documentation for all projects
+
+## Final Portfolio Value
+By March 2025, you'll have:
+- ✅ **6 Production-Grade Projects** showcasing different AWS architectures
+- ✅ **3-4 AWS Certifications** including the challenging DevOps Professional
+- ✅ **Deep Expertise** in Terraform, Docker, Kubernetes, and GitHub Actions  
+- ✅ **Enterprise Experience** with multi-account setups and governance
+- ✅ **Interview-Ready Portfolio** with comprehensive documentation
+- ✅ **Real-World Skills** that directly translate to senior DevOps roles
+
+This plan transforms you from AWS Developer Associate to **AWS DevOps Wizard** with a portfolio that stands out in the competitive job market! 🚀
