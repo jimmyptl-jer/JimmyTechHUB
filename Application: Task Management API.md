@@ -1,9 +1,9 @@
-# 🚀 Complete Task Management API Guide
+# Complete Task Management API Guide
 **Build a Serverless REST API with AWS Lambda, API Gateway & DynamoDB**
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 1. [Overview](#overview)
 2. [Architecture Design](#architecture-design)
 3. [Data Model](#data-model)
@@ -17,14 +17,14 @@
 
 ---
 
-## 🎯 Overview {#overview}
+## Overview
 
 ### What This API Does:
-- ✅ Create tasks
-- ✅ View all tasks
-- ✅ View single task by ID
-- ✅ Update task status (pending/completed)
-- ✅ Delete tasks
+- Create tasks
+- View all tasks
+- View single task by ID
+- Update task status (pending/completed)
+- Delete tasks
 
 ### Technologies Used:
 - **AWS Lambda** - Serverless compute
@@ -35,7 +35,7 @@
 
 ---
 
-## 🏗️ Architecture Design {#architecture-design}
+## Architecture Design
 
 ```
 User (Postman/Browser/Mobile App)
@@ -61,18 +61,18 @@ Client → API Gateway → Lambda Function → DynamoDB → Lambda → API Gatew
 
 ---
 
-## 📊 Data Model {#data-model}
+## Data Model
 
-### DynamoDB Table: `Tasks`
+### DynamoDB Table: Tasks
 
 ```json
 {
-  "taskId": "uuid-123",              // Primary Key (String)
-  "title": "Buy groceries",          // String (Required)
-  "description": "Milk, eggs, bread",// String (Optional)
-  "status": "pending",               // String: "pending" | "completed"
-  "createdAt": "2025-09-29T10:00:00Z", // ISO 8601 timestamp
-  "updatedAt": "2025-09-29T10:00:00Z"  // ISO 8601 timestamp
+  "taskId": "uuid-123",
+  "title": "Buy groceries",
+  "description": "Milk, eggs, bread",
+  "status": "pending",
+  "createdAt": "2025-09-29T10:00:00Z",
+  "updatedAt": "2025-09-29T10:00:00Z"
 }
 ```
 
@@ -84,11 +84,11 @@ Client → API Gateway → Lambda Function → DynamoDB → Lambda → API Gatew
 
 ---
 
-## 💻 Lambda Function Code {#lambda-function-code}
+## Lambda Function Code
 
 ### 1. Create Task Function
 
-**File: `create-task/index.js`**
+**File: create-task/index.js**
 
 ```javascript
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
@@ -101,10 +101,8 @@ const TABLE_NAME = process.env.TABLE_NAME || 'Tasks';
 
 exports.handler = async (event) => {
     try {
-        // Parse request body
         const body = JSON.parse(event.body);
         
-        // Validate required fields
         if (!body.title) {
             return {
                 statusCode: 400,
@@ -118,7 +116,6 @@ exports.handler = async (event) => {
             };
         }
         
-        // Create task object
         const timestamp = new Date().toISOString();
         const task = {
             taskId: uuidv4(),
@@ -129,7 +126,6 @@ exports.handler = async (event) => {
             updatedAt: timestamp
         };
         
-        // Save to DynamoDB
         const command = new PutCommand({
             TableName: TABLE_NAME,
             Item: task
@@ -168,7 +164,7 @@ exports.handler = async (event) => {
 
 ### 2. Get Tasks Function
 
-**File: `get-tasks/index.js`**
+**File: get-tasks/index.js**
 
 ```javascript
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
@@ -180,11 +176,9 @@ const TABLE_NAME = process.env.TABLE_NAME || 'Tasks';
 
 exports.handler = async (event) => {
     try {
-        // Check if taskId is provided in path parameters
         const taskId = event.pathParameters?.taskId;
         
         if (taskId) {
-            // Get single task
             const command = new GetCommand({
                 TableName: TABLE_NAME,
                 Key: { taskId }
@@ -217,7 +211,6 @@ exports.handler = async (event) => {
             };
             
         } else {
-            // Get all tasks
             const command = new ScanCommand({
                 TableName: TABLE_NAME
             });
@@ -256,7 +249,7 @@ exports.handler = async (event) => {
 
 ### 3. Update Task Function
 
-**File: `update-task/index.js`**
+**File: update-task/index.js**
 
 ```javascript
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
@@ -283,7 +276,6 @@ exports.handler = async (event) => {
             };
         }
         
-        // Check if task exists
         const getCommand = new GetCommand({
             TableName: TABLE_NAME,
             Key: { taskId }
@@ -304,10 +296,8 @@ exports.handler = async (event) => {
             };
         }
         
-        // Parse request body
         const body = JSON.parse(event.body);
         
-        // Build update expression
         let updateExpression = 'SET updatedAt = :updatedAt';
         const expressionAttributeValues = {
             ':updatedAt': new Date().toISOString()
@@ -340,7 +330,6 @@ exports.handler = async (event) => {
             expressionAttributeValues[':status'] = body.status;
         }
         
-        // Update task
         const updateCommand = new UpdateCommand({
             TableName: TABLE_NAME,
             Key: { taskId },
@@ -383,7 +372,7 @@ exports.handler = async (event) => {
 
 ### 4. Delete Task Function
 
-**File: `delete-task/index.js`**
+**File: delete-task/index.js**
 
 ```javascript
 const { DynamoDBClient } = require("@aws-sdk/client-dynamodb");
@@ -410,7 +399,6 @@ exports.handler = async (event) => {
             };
         }
         
-        // Check if task exists
         const getCommand = new GetCommand({
             TableName: TABLE_NAME,
             Key: { taskId }
@@ -431,7 +419,6 @@ exports.handler = async (event) => {
             };
         }
         
-        // Delete task
         const deleteCommand = new DeleteCommand({
             TableName: TABLE_NAME,
             Key: { taskId }
@@ -470,7 +457,7 @@ exports.handler = async (event) => {
 
 ### Package.json for all Lambda functions
 
-**File: `package.json`**
+**File: package.json**
 
 ```json
 {
@@ -488,7 +475,7 @@ exports.handler = async (event) => {
 
 ---
 
-## 🚀 Step-by-Step Deployment {#deployment-steps}
+## Step-by-Step Deployment
 
 ### Step 1: Create DynamoDB Table
 
@@ -497,8 +484,8 @@ exports.handler = async (event) => {
 1. Open AWS Console and go to **DynamoDB**
 2. Click **Create table**
 3. Configure:
-   - **Table name**: `Tasks`
-   - **Partition key**: `taskId` (Type: String)
+   - **Table name**: Tasks
+   - **Partition key**: taskId (Type: String)
    - **Table settings**: Default settings
    - **Table class**: DynamoDB Standard
    - **Capacity mode**: On-demand
@@ -516,7 +503,7 @@ aws dynamodb create-table \
     --region us-east-1
 ```
 
-✅ **Checkpoint**: Table should be visible in DynamoDB console with status "Active"
+**Checkpoint**: Table should be visible in DynamoDB console with status "Active"
 
 ---
 
@@ -530,7 +517,7 @@ aws dynamodb create-table \
 4. Click **Next**
 5. **Add permissions**: Search and select `AWSLambdaBasicExecutionRole`
 6. Click **Next**
-7. **Role name**: `TaskAPILambdaRole`
+7. **Role name**: TaskAPILambdaRole
 8. **Description**: Role for Task Management API Lambda functions
 9. Click **Create role**
 
@@ -562,39 +549,39 @@ aws dynamodb create-table \
 ```
 
 5. Click **Review policy**
-6. **Name**: `TaskAPILambdaDynamoDBAccess`
+6. **Name**: TaskAPILambdaDynamoDBAccess
 7. Click **Create policy**
 
-✅ **Checkpoint**: Role should have 2 policies attached
+**Checkpoint**: Role should have 2 policies attached
 
 ---
 
 ### Step 3: Create Lambda Functions
 
 You'll create 4 Lambda functions. Repeat these steps for each:
-- `create-task`
-- `get-tasks`
-- `update-task`
-- `delete-task`
+- create-task
+- get-tasks
+- update-task
+- delete-task
 
 #### For Each Lambda Function:
 
 1. Go to **Lambda** in AWS Console
 2. Click **Create function**
 3. Configure:
-   - **Function name**: `create-task` (change for each function)
+   - **Function name**: create-task (change for each function)
    - **Runtime**: Node.js 18.x
    - **Architecture**: x86_64
    - **Permissions**: 
      - Select **Use an existing role**
-     - Choose `TaskAPILambdaRole`
+     - Choose TaskAPILambdaRole
 4. Click **Create function**
 
 #### Add Code to Lambda:
 
 1. In the function page, scroll to **Code source**
-2. Delete the default code in `index.js`
-3. Copy the respective code from the [Lambda Function Code](#lambda-function-code) section
+2. Delete the default code in index.js
+3. Copy the respective code from the Lambda Function Code section
 4. Click **Deploy**
 
 #### Add Environment Variable:
@@ -603,8 +590,8 @@ You'll create 4 Lambda functions. Repeat these steps for each:
 2. Click **Environment variables** (left menu)
 3. Click **Edit**
 4. Click **Add environment variable**
-   - **Key**: `TABLE_NAME`
-   - **Value**: `Tasks`
+   - **Key**: TABLE_NAME
+   - **Value**: Tasks
 5. Click **Save**
 
 #### Configure Function Settings:
@@ -618,7 +605,7 @@ You'll create 4 Lambda functions. Repeat these steps for each:
 
 #### Install Dependencies (Important!):
 
-For each function, you need to add the `uuid` package:
+For each function, you need to add the uuid package:
 
 1. On your local machine, create a folder for the function:
 ```bash
@@ -626,13 +613,13 @@ mkdir create-task
 cd create-task
 ```
 
-2. Create `package.json`:
+2. Create package.json:
 ```bash
 npm init -y
 npm install uuid @aws-sdk/client-dynamodb @aws-sdk/lib-dynamodb
 ```
 
-3. Create `index.js` with the respective function code
+3. Create index.js with the respective function code
 
 4. Zip the folder:
 ```bash
@@ -642,12 +629,12 @@ zip -r function.zip .
 5. Upload to Lambda:
    - In Lambda console → **Code** tab
    - Click **Upload from** → **.zip file**
-   - Select your `function.zip`
+   - Select your function.zip
    - Click **Save**
 
 **Repeat for all 4 functions**
 
-✅ **Checkpoint**: All 4 Lambda functions should be created and deployed
+**Checkpoint**: All 4 Lambda functions should be created and deployed
 
 ---
 
@@ -661,37 +648,37 @@ zip -r function.zip .
 4. Configure:
    - **Choose the protocol**: REST
    - **Create new API**: New API
-   - **API name**: `TaskManagementAPI`
+   - **API name**: TaskManagementAPI
    - **Description**: Task Management REST API
    - **Endpoint Type**: Regional
 5. Click **Create API**
 
-✅ You now have an API with root resource `/`
+You now have an API with root resource /
 
 ---
 
-#### Create `/tasks` Resource:
+#### Create /tasks Resource:
 
-1. Click on `/` (root resource)
+1. Click on / (root resource)
 2. Click **Actions** → **Create Resource**
 3. Configure:
-   - **Resource Name**: `tasks`
-   - **Resource Path**: `/tasks` (auto-filled)
-   - ✅ Check **Enable API Gateway CORS**
+   - **Resource Name**: tasks
+   - **Resource Path**: /tasks (auto-filled)
+   - Check **Enable API Gateway CORS**
 4. Click **Create Resource**
 
 ---
 
 #### Create POST Method (Create Task):
 
-1. Click on `/tasks` resource
+1. Click on /tasks resource
 2. Click **Actions** → **Create Method**
-3. Select **POST** from dropdown → Click ✓ checkmark
+3. Select **POST** from dropdown → Click checkmark
 4. Configure:
    - **Integration type**: Lambda Function
-   - ✅ Check **Use Lambda Proxy integration**
+   - Check **Use Lambda Proxy integration**
    - **Lambda Region**: us-east-1 (your region)
-   - **Lambda Function**: `create-task`
+   - **Lambda Function**: create-task
 5. Click **Save**
 6. Popup appears → Click **OK** to grant permission
 
@@ -699,77 +686,77 @@ zip -r function.zip .
 
 #### Create GET Method (Get All Tasks):
 
-1. Click on `/tasks` resource
+1. Click on /tasks resource
 2. Click **Actions** → **Create Method**
-3. Select **GET** → Click ✓
+3. Select **GET** → Click checkmark
 4. Configure:
    - **Integration type**: Lambda Function
-   - ✅ Check **Use Lambda Proxy integration**
-   - **Lambda Function**: `get-tasks`
+   - Check **Use Lambda Proxy integration**
+   - **Lambda Function**: get-tasks
 5. Click **Save** → Click **OK**
 
 ---
 
-#### Create `/tasks/{taskId}` Resource:
+#### Create /tasks/{taskId} Resource:
 
-1. Click on `/tasks` resource
+1. Click on /tasks resource
 2. Click **Actions** → **Create Resource**
 3. Configure:
-   - **Resource Name**: `taskId`
-   - **Resource Path**: `{taskId}` (with curly braces!)
-   - ✅ Check **Enable API Gateway CORS**
+   - **Resource Name**: taskId
+   - **Resource Path**: {taskId} (with curly braces!)
+   - Check **Enable API Gateway CORS**
 4. Click **Create Resource**
 
 ---
 
 #### Create GET Method for Single Task:
 
-1. Click on `/tasks/{taskId}` resource
+1. Click on /tasks/{taskId} resource
 2. Click **Actions** → **Create Method**
-3. Select **GET** → Click ✓
+3. Select **GET** → Click checkmark
 4. Configure:
    - **Integration type**: Lambda Function
-   - ✅ Check **Use Lambda Proxy integration**
-   - **Lambda Function**: `get-tasks`
+   - Check **Use Lambda Proxy integration**
+   - **Lambda Function**: get-tasks
 5. Click **Save** → Click **OK**
 
 ---
 
 #### Create PUT Method (Update Task):
 
-1. Click on `/tasks/{taskId}` resource
+1. Click on /tasks/{taskId} resource
 2. Click **Actions** → **Create Method**
-3. Select **PUT** → Click ✓
+3. Select **PUT** → Click checkmark
 4. Configure:
    - **Integration type**: Lambda Function
-   - ✅ Check **Use Lambda Proxy integration**
-   - **Lambda Function**: `update-task`
+   - Check **Use Lambda Proxy integration**
+   - **Lambda Function**: update-task
 5. Click **Save** → Click **OK**
 
 ---
 
 #### Create DELETE Method (Delete Task):
 
-1. Click on `/tasks/{taskId}` resource
+1. Click on /tasks/{taskId} resource
 2. Click **Actions** → **Create Method**
-3. Select **DELETE** → Click ✓
+3. Select **DELETE** → Click checkmark
 4. Configure:
    - **Integration type**: Lambda Function
-   - ✅ Check **Use Lambda Proxy integration**
-   - **Lambda Function**: `delete-task`
+   - Check **Use Lambda Proxy integration**
+   - **Lambda Function**: delete-task
 5. Click **Save** → Click **OK**
 
 ---
 
 #### Enable CORS:
 
-1. Click on `/tasks` resource
+1. Click on /tasks resource
 2. Click **Actions** → **Enable CORS**
 3. Keep defaults → Click **Enable CORS and replace existing CORS headers**
 4. Click **Yes, replace existing values**
 
-5. Repeat for `/tasks/{taskId}`:
-   - Click on `/tasks/{taskId}`
+5. Repeat for /tasks/{taskId}:
+   - Click on /tasks/{taskId}
    - Click **Actions** → **Enable CORS**
    - Click **Enable CORS and replace existing CORS headers**
 
@@ -780,11 +767,11 @@ zip -r function.zip .
 1. Click **Actions** → **Deploy API**
 2. Configure:
    - **Deployment stage**: [New Stage]
-   - **Stage name**: `dev`
+   - **Stage name**: dev
    - **Stage description**: Development environment
 3. Click **Deploy**
 
-✅ **Your API is now live!**
+**Your API is now live!**
 
 #### Get Your Invoke URL:
 
@@ -814,9 +801,9 @@ TaskManagementAPI
 
 ---
 
-## 🧪 Testing Your API {#testing}
+## Testing Your API
 
-### Replace `YOUR_API_URL` with your actual Invoke URL
+### Replace YOUR_API_URL with your actual Invoke URL
 
 ### 1. Create a Task (POST)
 
@@ -956,14 +943,14 @@ curl -X DELETE https://YOUR_API_URL/dev/tasks/abc-123-def-456
 1. **Install Postman** (https://www.postman.com/downloads/)
 2. **Create new Collection**: "Task Management API"
 3. **Set Collection Variable**:
-   - Key: `base_url`
-   - Value: `https://YOUR_API_URL/dev`
+   - Key: base_url
+   - Value: https://YOUR_API_URL/dev
 
 4. **Create Requests**:
 
    **Request 1: Create Task**
    - Method: POST
-   - URL: `{{base_url}}/tasks`
+   - URL: {{base_url}}/tasks
    - Body → raw → JSON:
    ```json
    {
@@ -974,15 +961,15 @@ curl -X DELETE https://YOUR_API_URL/dev/tasks/abc-123-def-456
 
    **Request 2: Get All Tasks**
    - Method: GET
-   - URL: `{{base_url}}/tasks`
+   - URL: {{base_url}}/tasks
 
    **Request 3: Get Single Task**
    - Method: GET
-   - URL: `{{base_url}}/tasks/{{taskId}}`
+   - URL: {{base_url}}/tasks/{{taskId}}
 
    **Request 4: Update Task**
    - Method: PUT
-   - URL: `{{base_url}}/tasks/{{taskId}}`
+   - URL: {{base_url}}/tasks/{{taskId}}
    - Body → raw → JSON:
    ```json
    {
@@ -992,7 +979,7 @@ curl -X DELETE https://YOUR_API_URL/dev/tasks/abc-123-def-456
 
    **Request 5: Delete Task**
    - Method: DELETE
-   - URL: `{{base_url}}/tasks/{{taskId}}`
+   - URL: {{base_url}}/tasks/{{taskId}}
 
 ---
 
@@ -1000,7 +987,7 @@ curl -X DELETE https://YOUR_API_URL/dev/tasks/abc-123-def-456
 
 #### Test POST /tasks:
 
-1. In API Gateway, click `/tasks` → **POST**
+1. In API Gateway, click /tasks → **POST**
 2. Click **Test** (lightning bolt)
 3. Scroll to **Request Body**:
 ```json
@@ -1014,23 +1001,23 @@ curl -X DELETE https://YOUR_API_URL/dev/tasks/abc-123-def-456
 
 #### Test GET /tasks:
 
-1. Click `/tasks` → **GET**
+1. Click /tasks → **GET**
 2. Click **Test**
 3. Click **Test** (no body needed)
 4. Check response: Status 200, array of tasks
 
 ---
 
-## 📊 Monitoring & Troubleshooting {#monitoring}
+## Monitoring & Troubleshooting
 
 ### CloudWatch Logs:
 
 1. Go to **CloudWatch** → **Log groups**
 2. Find logs for each Lambda:
-   - `/aws/lambda/create-task`
-   - `/aws/lambda/get-tasks`
-   - `/aws/lambda/update-task`
-   - `/aws/lambda/delete-task`
+   - /aws/lambda/create-task
+   - /aws/lambda/get-tasks
+   - /aws/lambda/update-task
+   - /aws/lambda/delete-task
 3. Click to view execution logs
 
 ### CloudWatch Metrics:
@@ -1045,7 +1032,7 @@ Check metrics for:
 
 ### Common Issues & Solutions:
 
-#### ❌ "Missing Authentication Token"
+#### "Missing Authentication Token"
 
 **Cause**: Wrong URL or endpoint not deployed
 
@@ -1056,7 +1043,7 @@ Check metrics for:
 
 ---
 
-#### ❌ "Internal Server Error" (502)
+#### "Internal Server Error" (502)
 
 **Cause**: Lambda function error
 
@@ -1064,13 +1051,13 @@ Check metrics for:
 1. Check CloudWatch logs for the Lambda
 2. Look for error messages
 3. Common issues:
-   - Missing environment variable `TABLE_NAME`
+   - Missing environment variable TABLE_NAME
    - IAM permission denied
    - Invalid JSON in request body
 
 ---
 
-#### ❌ "Access Denied" (403)
+#### "Access Denied" (403)
 
 **Cause**: IAM permissions issue
 
@@ -1081,7 +1068,7 @@ Check metrics for:
 
 ---
 
-#### ❌ "Task not found" (404)
+#### "Task not found" (404)
 
 **Cause**: Invalid taskId or task doesn't exist
 
@@ -1092,24 +1079,24 @@ Check metrics for:
 
 ---
 
-#### ❌ CORS Errors in Browser
+#### CORS Errors in Browser
 
 **Cause**: CORS not enabled or not deployed
 
 **Solution**:
-1. Enable CORS on both `/tasks` and `/tasks/{taskId}`
+1. Enable CORS on both /tasks and /tasks/{taskId}
 2. Re-deploy API after enabling CORS
 3. Check response headers include:
-   - `Access-Control-Allow-Origin: *`
+   - Access-Control-Allow-Origin: *
 
 ---
 
-#### ❌ "ValidationException" from DynamoDB
+#### "ValidationException" from DynamoDB
 
 **Cause**: Missing or invalid required fields
 
 **Solution**:
-- Ensure `taskId` is provided for operations requiring it
+- Ensure taskId is provided for operations requiring it
 - Check data types match schema
 
 ---
@@ -1123,7 +1110,7 @@ Check metrics for:
 
 2. **Verify Environment Variables**
    - Lambda → Configuration → Environment variables
-   - Ensure `TABLE_NAME = Tasks`
+   - Ensure TABLE_NAME = Tasks
 
 3. **Test Lambda Directly**
    - Use Lambda Test feature in console
@@ -1137,12 +1124,12 @@ Check metrics for:
 
 5. **Verify DynamoDB Table**
    - Check table exists and is Active
-   - Verify table name matches `TABLE_NAME`
-   - Check partition key is `taskId`
+   - Verify table name matches TABLE_NAME
+   - Check partition key is taskId
 
 ---
 
-## 💰 Cost Estimates {#costs}
+## Cost Estimates
 
 ### For 1 Million Requests/Month:
 
@@ -1176,23 +1163,23 @@ Check metrics for:
 
 ---
 
-## 🔐 Security Best Practices {#security}
+## Security Best Practices
 
 ### 1. Enable API Keys (Production)
 
 **Setup API Key:**
 1. In API Gateway → **API Keys** → **Actions** → **Create API Key**
-2. Name: `TaskAPI-Production-Key`
+2. Name: TaskAPI-Production-Key
 3. Click **Save**
 
 **Create Usage Plan:**
 1. **Usage Plans** → **Create**
-2. Name: `TaskAPI-Usage-Plan`
+2. Name: TaskAPI-Usage-Plan
 3. Rate: 1000 requests/second
 4. Burst: 2000 requests
 5. Quota: 1,000,000 requests/month
 6. Click **Next**
-7. Add API Stage: `dev`
+7. Add API Stage: dev
 8. Click **Next**
 9. Add API Key
 10. Click **Done**
@@ -1223,14 +1210,14 @@ curl https://YOUR_API_URL/dev/tasks \
 **Add Cognito Authorizer:**
 1. In API Gateway → **Authorizers** → **Create**
 2. Type: Cognito
-3. Name: `TaskAPI-Authorizer`
+3. Name: TaskAPI-Authorizer
 4. Cognito User Pool: Select your pool
-5. Token Source: `Authorization`
+5. Token Source: Authorization
 6. Create
 
 **Apply to Methods:**
 1. Each method → **Method Request**
-2. Authorization: `TaskAPI-Authorizer`
+2. Authorization: TaskAPI-Authorizer
 3. Deploy API
 
 ---
@@ -1267,7 +1254,7 @@ curl https://YOUR_API_URL/dev/tasks \
 ### 4. Enable Request Throttling
 
 **Per API Level:**
-1. API Gateway → **Stages** → `dev`
+1. API Gateway → **Stages** → dev
 2. **Settings** tab
 3. Default Method Throttling:
    - Rate: 1000 requests/second
@@ -1337,9 +1324,9 @@ curl https://YOUR_API_URL/dev/tasks \
 ### 8. Environment-Specific Stages
 
 **Create Multiple Stages:**
-- `dev` - Development
-- `staging` - Testing
-- `prod` - Production
+- dev - Development
+- staging - Testing
+- prod - Production
 
 **Different configurations per stage:**
 - Different DynamoDB tables
@@ -1348,14 +1335,13 @@ curl https://YOUR_API_URL/dev/tasks \
 
 ---
 
-## 🚀 Next Steps {#next-steps}
+## Next Steps
 
 ### Immediate Improvements:
 
 #### 1. Add Pagination
 **Modify get-tasks Lambda:**
 ```javascript
-// Add query parameters
 const limit = event.queryStringParameters?.limit || 10;
 const lastKey = event.queryStringParameters?.lastKey;
 
@@ -1371,8 +1357,6 @@ const command = new ScanCommand({
 #### 2. Add Search/Filter
 **Add Query by Status:**
 ```javascript
-// Create GSI (Global Secondary Index) on status
-// Then query by status
 const command = new QueryCommand({
     TableName: TABLE_NAME,
     IndexName: 'status-index',
@@ -1505,7 +1489,6 @@ test('creates task successfully', async () => {
 ```javascript
 const { SESClient, SendEmailCommand } = require("@aws-sdk/client-ses");
 
-// Send email when task is created
 const params = {
     Destination: {
         ToAddresses: [userEmail]
@@ -1522,7 +1505,7 @@ const params = {
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 task-management-api/
@@ -1565,7 +1548,7 @@ task-management-api/
 
 ---
 
-## ✅ Deployment Checklist
+## Deployment Checklist
 
 ### Pre-Deployment:
 - [ ] AWS account created
@@ -1576,7 +1559,7 @@ task-management-api/
 ### DynamoDB:
 - [ ] Tasks table created
 - [ ] Table status is Active
-- [ ] Partition key is `taskId`
+- [ ] Partition key is taskId
 
 ### IAM:
 - [ ] Lambda execution role created
@@ -1584,24 +1567,24 @@ task-management-api/
 - [ ] CloudWatch Logs permissions attached
 
 ### Lambda Functions:
-- [ ] `create-task` function deployed
-- [ ] `get-tasks` function deployed
-- [ ] `update-task` function deployed
-- [ ] `delete-task` function deployed
-- [ ] Environment variable `TABLE_NAME` set for all
+- [ ] create-task function deployed
+- [ ] get-tasks function deployed
+- [ ] update-task function deployed
+- [ ] delete-task function deployed
+- [ ] Environment variable TABLE_NAME set for all
 - [ ] Dependencies (uuid, aws-sdk) installed
 
 ### API Gateway:
 - [ ] REST API created
-- [ ] `/tasks` resource created
-- [ ] `/tasks/{taskId}` resource created
+- [ ] /tasks resource created
+- [ ] /tasks/{taskId} resource created
 - [ ] POST /tasks method configured
 - [ ] GET /tasks method configured
 - [ ] GET /tasks/{taskId} method configured
 - [ ] PUT /tasks/{taskId} method configured
 - [ ] DELETE /tasks/{taskId} method configured
 - [ ] CORS enabled on all resources
-- [ ] API deployed to `dev` stage
+- [ ] API deployed to dev stage
 - [ ] Invoke URL noted
 
 ### Testing:
@@ -1625,7 +1608,7 @@ task-management-api/
 
 ---
 
-## 🆘 Support & Resources
+## Support & Resources
 
 ### AWS Documentation:
 - **Lambda**: https://docs.aws.amazon.com/lambda/
@@ -1635,7 +1618,7 @@ task-management-api/
 
 ### Community:
 - AWS Forums: https://forums.aws.amazon.com/
-- Stack Overflow: Tag `aws-lambda`, `amazon-dynamodb`
+- Stack Overflow: Tag aws-lambda, amazon-dynamodb
 - Reddit: r/aws
 
 ### Learning Resources:
@@ -1645,7 +1628,7 @@ task-management-api/
 
 ---
 
-## 📝 License & Disclaimer
+## License & Disclaimer
 
 This is a tutorial/educational project. For production use:
 - Implement proper authentication
@@ -1657,14 +1640,14 @@ This is a tutorial/educational project. For production use:
 
 ---
 
-## 🎉 Congratulations!
+## Congratulations!
 
 You've successfully built a complete serverless REST API using:
-✅ AWS Lambda for compute  
-✅ API Gateway for HTTP endpoints  
-✅ DynamoDB for data storage  
-✅ IAM for security  
-✅ CloudWatch for monitoring
+- AWS Lambda for compute  
+- API Gateway for HTTP endpoints  
+- DynamoDB for data storage  
+- IAM for security  
+- CloudWatch for monitoring
 
 Your API can now:
 - Create tasks
@@ -1673,11 +1656,11 @@ Your API can now:
 - Update task status
 - Delete tasks
 
-**All without managing any servers!** 🚀
+**All without managing any servers!**
 
 ---
 
-## 📞 Need Help?
+## Need Help?
 
 If you encounter issues:
 
