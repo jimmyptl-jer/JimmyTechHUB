@@ -1335,3 +1335,755 @@
 - Cross-account access
 
 ---
+
+### Module 37: AWS Organizations (continued)
+
+**Core Topics (continued):**
+- Tag policies for governance
+- AI services opt-out policies
+- Backup policies
+- Resource sharing with RAM
+
+**Required Reading:**
+- AWS Organizations User Guide
+- SCP Best Practices
+- Multi-Account Strategy Whitepaper
+- AWS Landing Zone Documentation
+
+**Hands-On Practice:**
+- Create organization structure
+- Implement OU hierarchy
+- Create and test SCPs
+- Configure consolidated billing
+- Set up cross-account roles
+
+**Assessment:**
+- Design enterprise account structure
+- Implement restrictive SCPs
+- Configure proper governance
+
+---
+
+### Module 38: AWS Control Tower (12 hours)
+**Learning Objectives:**
+- Deploy AWS Control Tower landing zone
+- Configure guardrails and policies
+- Automate account provisioning
+
+**Core Topics:**
+- Control Tower landing zone setup
+- Mandatory and strongly recommended guardrails
+- Optional guardrails configuration
+- Account Factory for provisioning
+- Customizations for Control Tower (CfCT)
+- Control Tower lifecycle events
+- Detective and preventive controls
+- Account Factory Terraform integration
+
+**Required Reading:**
+- Control Tower User Guide
+- Control Tower Best Practices
+- Account Factory Documentation
+- CfCT Implementation Guide
+
+**Hands-On Practice:**
+- Deploy Control Tower landing zone
+- Configure guardrails
+- Provision accounts with Account Factory
+- Implement custom guardrails
+- Set up automated account baseline
+
+**Assessment:**
+- Deploy complete landing zone
+- Configure appropriate guardrails
+- Automate account creation
+
+---
+
+### Module 39: Centralized Logging & Monitoring (10 hours)
+**Learning Objectives:**
+- Aggregate logs from all accounts
+- Implement centralized monitoring
+- Create unified dashboards
+
+**Core Topics:**
+- CloudWatch Logs cross-account aggregation
+- CloudWatch cross-account dashboards
+- EventBridge cross-account rules
+- Kinesis Data Firehose for log aggregation
+- S3 centralized logging
+- Athena for log analysis
+- QuickSight for visualization
+- CloudWatch Insights queries
+
+**Required Reading:**
+- CloudWatch Cross-Account Guide
+- Kinesis Firehose Documentation
+- Athena User Guide
+- Log Aggregation Best Practices
+
+**Hands-On Practice:**
+- Set up centralized log account
+- Configure cross-account shipping
+- Create unified dashboards
+- Implement log analysis with Athena
+- Build automated reports
+
+**Assessment:**
+- Implement centralized logging
+- Create enterprise dashboards
+- Configure log retention policies
+
+---
+
+### Module 40: AWS Config & Compliance (10 hours)
+**Learning Objectives:**
+- Implement compliance automation
+- Track resource configurations
+- Remediate non-compliant resources
+
+**Core Topics:**
+- AWS Config rules (managed and custom)
+- Config aggregators for multi-account
+- Conformance packs for compliance
+- Automated remediation with SSM
+- Config recorder configuration
+- Compliance dashboards
+- Integration with Security Hub
+- Custom Config rules with Lambda
+
+**Required Reading:**
+- AWS Config User Guide
+- Config Rules Reference
+- Conformance Packs Guide
+- Remediation Actions Documentation
+
+**Hands-On Practice:**
+- Deploy Config across accounts
+- Create config aggregator
+- Implement conformance packs
+- Build custom Config rules
+- Configure auto-remediation
+
+**Assessment:**
+- Implement compliance framework
+- Configure automated remediation
+- Create compliance reports
+
+---
+
+### Module 41: AWS Security Hub & GuardDuty (10 hours)
+**Learning Objectives:**
+- Centralize security findings
+- Automate security responses
+- Implement threat detection
+
+**Core Topics:**
+- Security Hub multi-account setup
+- Security standards (CIS, PCI DSS)
+- Custom security insights
+- GuardDuty threat detection
+- GuardDuty findings and actions
+- Automated incident response
+- Integration with ticketing systems
+- Security Hub Custom Actions
+
+**Required Reading:**
+- Security Hub User Guide
+- GuardDuty User Guide
+- Security Hub Standards Guide
+- Automated Response Patterns
+
+**Hands-On Practice:**
+- Enable Security Hub organization-wide
+- Configure security standards
+- Deploy GuardDuty
+- Build automated remediation
+- Create security dashboards
+
+**Assessment:**
+- Implement security operations center
+- Configure automated responses
+- Create security metrics
+
+---
+
+### Module 42: Cost Management & Optimization (10 hours)
+**Learning Objectives:**
+- Implement cost allocation strategies
+- Optimize AWS spending
+- Forecast and budget effectively
+
+**Core Topics:**
+- Cost allocation tags
+- AWS Cost Explorer advanced features
+- AWS Budgets and alerts
+- Savings Plans and Reserved Instances
+- Cost anomaly detection
+- Right-sizing recommendations
+- S3 Intelligent-Tiering
+- Compute Optimizer
+- Trusted Advisor cost checks
+
+**Required Reading:**
+- AWS Cost Management User Guide
+- Cost Optimization Best Practices
+- FinOps Foundation Resources
+- AWS Pricing Documentation
+
+**Hands-On Practice:**
+- Configure cost allocation tags
+- Create detailed budgets
+- Implement cost anomaly detection
+- Analyze spending patterns
+- Build cost dashboards
+
+**Assessment:**
+- Create cost optimization plan
+- Implement cost governance
+- Generate cost reports
+
+---
+
+### Module 43: Disaster Recovery & Business Continuity (12 hours)
+**Learning Objectives:**
+- Design DR strategies for AWS
+- Implement backup automation
+- Test recovery procedures
+
+**Core Topics:**
+- DR strategies (backup/restore, pilot light, warm standby, multi-site)
+- RTO and RPO requirements
+- AWS Backup centralized solution
+- Cross-region replication
+- Multi-region architectures
+- Route 53 health-based failover
+- DynamoDB global tables
+- Aurora global databases
+- DR testing procedures
+
+**Required Reading:**
+- Disaster Recovery Whitepaper
+- AWS Backup User Guide
+- Multi-Region Architecture Guide
+- Business Continuity Planning
+
+**Hands-On Practice:**
+- Implement AWS Backup plans
+- Configure cross-region replication
+- Set up multi-region failover
+- Test recovery procedures
+- Document runbooks
+
+**Assessment:**
+- Design complete DR strategy
+- Implement backup automation
+- Test and document recovery
+
+---
+
+### Module 44: Infrastructure Governance (10 hours)
+**Learning Objectives:**
+- Implement resource tagging standards
+- Enforce infrastructure policies
+- Automate compliance checks
+
+**Core Topics:**
+- Tagging strategies and enforcement
+- Service Catalog for approved resources
+- CloudFormation StackSets for multi-account
+- Resource Groups and Tag Editor
+- AWS Organizations tag policies
+- Policy as Code with OPA/Sentinel
+- Resource Access Manager (RAM)
+- License Manager
+
+**Required Reading:**
+- Tagging Best Practices
+- Service Catalog Administrator Guide
+- StackSets User Guide
+- Governance Best Practices
+
+**Hands-On Practice:**
+- Define tagging strategy
+- Create Service Catalog products
+- Deploy with StackSets
+- Enforce tag policies
+- Implement resource sharing
+
+**Assessment:**
+- Create governance framework
+- Implement tag enforcement
+- Deploy standardized resources
+
+---
+
+### Module 45: AWS Well-Architected Framework (8 hours)
+**Learning Objectives:**
+- Understand Well-Architected pillars
+- Conduct architecture reviews
+- Implement best practices
+
+**Core Topics:**
+- Operational Excellence pillar
+- Security pillar
+- Reliability pillar
+- Performance Efficiency pillar
+- Cost Optimization pillar
+- Sustainability pillar
+- Well-Architected Tool
+- Lens for specific workloads
+- Architecture review process
+
+**Required Reading:**
+- Well-Architected Framework (all pillars)
+- Well-Architected Tool Documentation
+- Serverless Lens
+- SaaS Lens
+
+**Hands-On Practice:**
+- Use Well-Architected Tool
+- Review existing architectures
+- Create improvement plans
+- Document architectural decisions
+- Implement recommendations
+
+**Assessment:**
+- Conduct architecture review
+- Create remediation plan
+- Document decisions (ADRs)
+
+---
+
+### Module 46: Project Implementation (20 hours)
+**Project: Enterprise Multi-Account Setup**
+
+**Architecture Components:**
+1. **Organization Structure**
+   - Root account
+   - Security OU (log archive, security tooling)
+   - Infrastructure OU (shared services, networking)
+   - Workloads OU (dev, staging, prod)
+   - Sandbox OU (experimentation)
+
+2. **Foundational Services**
+   - AWS Control Tower landing zone
+   - Centralized logging to S3
+   - CloudTrail organization trail
+   - Config organization aggregator
+   - Security Hub multi-account
+   - GuardDuty organization-wide
+
+3. **Networking**
+   - Transit Gateway multi-region
+   - Shared services VPC
+   - Workload VPCs
+   - VPC peering/sharing
+   - Direct Connect or VPN
+
+4. **Security & Compliance**
+   - SCPs for governance
+   - Mandatory guardrails
+   - IAM Identity Center (SSO)
+   - Secrets management
+   - Compliance automation
+
+5. **Operations**
+   - Centralized monitoring
+   - Cost management
+   - Backup strategy
+   - DR implementation
+   - Service Catalog
+
+**Technical Requirements:**
+- Multi-account organization (10+ accounts)
+- Complete Terraform automation
+- All foundational services enabled
+- Comprehensive documentation
+- Security baseline implemented
+- Cost allocation configured
+- DR strategy documented
+
+**Deliverables:**
+- Complete enterprise setup
+- Infrastructure as Code
+- Governance policies
+- Runbooks and procedures
+- Architecture diagrams
+- Security documentation
+- Cost optimization plan
+- Training materials
+
+**Total March Hours: 102 hours**
+
+---
+
+### Module 47: AWS Developer Associate - Final Review (20 hours)
+**Focus Areas:**
+- Lambda functions and triggers
+- API Gateway configurations
+- DynamoDB operations
+- Elastic Beanstalk
+- CI/CD with AWS services
+- CloudFormation templates
+- Monitoring and logging
+- IAM policies and permissions
+
+**Study Activities:**
+- Review all AWS documentation
+- Complete practice exams (3+)
+- Review weak areas
+- Hands-on labs for all services
+- Memorize service limits
+- Understand pricing models
+
+**Resources:**
+- AWS Skill Builder courses
+- Tutorials Dojo practice exams
+- A Cloud Guru course materials
+- AWS exam guides
+- Hands-on labs
+
+**Assessment:**
+- Consistently score 80%+ on practice exams
+- Complete all hands-on labs
+- Review all flagged topics
+
+---
+
+### Module 48: AWS DevOps Professional - Final Review (20 hours)
+**Focus Areas:**
+- Advanced CI/CD patterns
+- Configuration management
+- Monitoring and logging at scale
+- Policies and standards automation
+- Incident and event response
+- High availability and elasticity
+- Security controls and compliance
+
+**Study Activities:**
+- Complete AWS DevOps Engineer path
+- Take practice exams (4+)
+- Review case studies
+- Practice scenario-based questions
+- Review all project implementations
+- Document lessons learned
+
+**Resources:**
+- AWS DevOps Professional exam guide
+- Tutorials Dojo practice exams
+- Linux Academy materials
+- AWS whitepapers
+- Re:Invent session videos
+
+**Assessment:**
+- Score 85%+ on practice exams
+- Complete scenario walkthroughs
+- Review all DevOps patterns
+
+---
+
+## TOTAL PROGRAM SUMMARY
+
+### Monthly Hour Breakdown
+- **October:** 110 hours (Serverless Architecture)
+- **November:** 110 hours (Container Orchestration)
+- **December:** 90 hours (Global Content Delivery)
+- **January:** 130 hours (Kubernetes & Microservices)
+- **February:** 110 hours (AWS Native CI/CD)
+- **March:** 142 hours (Enterprise & Certification)
+
+**Total Program Hours: 692 hours**
+
+---
+
+## CERTIFICATION TIMELINE
+
+### October 2024
+**Target:** AWS Developer Associate
+- Study: Modules 1-6
+- Practice exams: 3 full tests
+- Exam date: End of month
+- Study hours: 10-15 hours/week
+
+### November-December 2024
+**Target:** HashiCorp Terraform Associate
+- Study: Terraform modules throughout projects
+- Practice exams: 2 full tests
+- Exam date: Mid-December
+- Study hours: 6-8 hours/week
+
+### January-March 2025
+**Target:** AWS DevOps Professional
+- Study: All modules with focus on DevOps patterns
+- Practice exams: 4 full tests
+- Exam date: End of March
+- Study hours: 10-12 hours/week
+
+---
+
+## WEEKLY TIME COMMITMENT
+
+### Standard Week Structure
+- **Monday-Friday:** 2-3 hours daily (10-15 hours)
+- **Saturday:** 4-6 hours (project work)
+- **Sunday:** 4-6 hours (hands-on labs)
+- **Total:** 18-27 hours per week
+
+### Flexible Schedule Options
+
+**Option 1: Evening Focus**
+- Weekday evenings: 2.5 hours (Mon-Fri)
+- Weekend: 5 hours (Sat-Sun)
+- Total: 22.5 hours/week
+
+**Option 2: Weekend Intensive**
+- Weekday evenings: 1.5 hours (Mon-Fri)
+- Weekend: 8 hours (Sat-Sun)
+- Total: 23.5 hours/week
+
+**Option 3: Mixed Approach**
+- 3 weekdays: 3 hours each
+- 2 weekdays: 1 hour each
+- Weekend: 6 hours total
+- Total: 17 hours/week
+
+---
+
+## SUCCESS METRICS & TRACKING
+
+### Monthly Deliverables Checklist
+
+**October:**
+- [ ] Serverless API fully functional
+- [ ] 10+ Lambda functions deployed
+- [ ] Complete Terraform modules (3+)
+- [ ] CI/CD pipeline operational
+- [ ] Documentation complete
+- [ ] AWS Developer Associate passed
+
+**November:**
+- [ ] Containerized app on ECS
+- [ ] RDS Multi-AZ configured
+- [ ] ElastiCache integrated
+- [ ] Blue/green deployment working
+- [ ] Monitoring dashboards live
+- [ ] Load testing completed
+
+**December:**
+- [ ] Global CDN deployed
+- [ ] Lighthouse score >90
+- [ ] Lambda@Edge functions working
+- [ ] Multi-region setup complete
+- [ ] Terraform Associate passed
+- [ ] Performance optimized
+
+**January:**
+- [ ] EKS cluster production-ready
+- [ ] 5+ microservices deployed
+- [ ] Service mesh operational
+- [ ] Event-driven communication working
+- [ ] Observability stack complete
+- [ ] Helm charts created
+
+**February:**
+- [ ] 4 AWS native pipelines working
+- [ ] Cross-account deployment functional
+- [ ] Security scanning automated
+- [ ] Secrets management implemented
+- [ ] All deployment strategies tested
+- [ ] Pipeline monitoring active
+
+**March:**
+- [ ] Multi-account organization complete
+- [ ] Control Tower deployed
+- [ ] Compliance automation working
+- [ ] Centralized logging operational
+- [ ] DR strategy tested
+- [ ] AWS DevOps Professional passed
+
+---
+
+## PORTFOLIO PRESENTATION STRUCTURE
+
+### Project Documentation Standard
+Each project should include:
+
+1. **README.md**
+   - Project overview
+   - Architecture diagram
+   - Tech stack
+   - Setup instructions
+   - Usage examples
+
+2. **Architecture Documentation**
+   - System architecture diagram
+   - Data flow diagrams
+   - Infrastructure diagram
+   - Security model
+
+3. **Technical Documentation**
+   - API documentation
+   - Database schema
+   - Infrastructure as Code docs
+   - Deployment procedures
+
+4. **Performance Metrics**
+   - Load testing results
+   - Performance benchmarks
+   - Cost analysis
+   - Optimization strategies
+
+5. **Lessons Learned**
+   - Challenges faced
+   - Solutions implemented
+   - Best practices discovered
+   - Future improvements
+
+---
+
+## LEARNING RESOURCES BY CATEGORY
+
+### Official AWS Resources
+- AWS Documentation (primary reference)
+- AWS Skill Builder (free training)
+- AWS Workshops (hands-on labs)
+- AWS Whitepapers (architectural guidance)
+- AWS re:Invent videos (latest updates)
+
+### Certification Prep Platforms
+- Tutorials Dojo (practice exams)
+- A Cloud Guru (video courses)
+- Linux Academy (hands-on labs)
+- AWS Certified Practice Exams (official)
+- Whizlabs (practice tests)
+
+### Books & Deep Dive
+- AWS Certified Developer Official Study Guide
+- AWS Certified DevOps Engineer Official Study Guide
+- Terraform: Up & Running (O'Reilly)
+- Kubernetes in Action (Manning)
+- Building Microservices (O'Reilly)
+
+### Community & Forums
+- AWS subreddit (r/aws)
+- Stack Overflow (aws tags)
+- AWS re:Post (official forum)
+- DevOps subreddit (r/devops)
+- Terraform community forum
+
+### YouTube Channels
+- AWS Online Tech Talks
+- Be A Better Dev
+- TechWorld with Nana
+- FreeCodeCamp
+- Stephane Maarek
+
+---
+
+## INTERVIEW PREPARATION TIMELINE
+
+### Month 4-5 (January-February)
+**Start Job Applications**
+- Update LinkedIn profile with projects
+- Create portfolio website
+- Start applying to positions
+- Network with AWS community
+- Attend virtual meetups
+
+### Month 5-6 (February-March)
+**Interview Preparation**
+- Practice system design questions
+- Review behavioral questions
+- Mock interviews
+- Technical deep dives
+- Prepare project presentations
+
+### Key Interview Topics to Master
+1. **System Design**
+   - Scalability patterns
+   - High availability design
+   - Cost optimization strategies
+   - Security best practices
+
+2. **Technical Deep Dives**
+   - Specific AWS services
+   - Troubleshooting scenarios
+   - Performance optimization
+   - CI/CD implementation
+
+3. **Behavioral Questions**
+   - Project challenges overcome
+   - Team collaboration examples
+   - Learning from failures
+   - Leadership situations
+
+4. **Practical Demonstrations**
+   - Live coding exercises
+   - Infrastructure diagram creation
+   - Debugging scenarios
+   - Architecture reviews
+
+---
+
+## FINAL CHECKLIST FOR COMPLETION
+
+### Technical Skills Mastery
+- [ ] Can design serverless architectures
+- [ ] Can containerize and orchestrate applications
+- [ ] Can implement CI/CD pipelines
+- [ ] Can manage Kubernetes clusters
+- [ ] Can write production Terraform
+- [ ] Can implement monitoring and observability
+- [ ] Can design multi-account AWS setups
+- [ ] Can optimize for cost and performance
+
+### Certifications Achieved
+- [ ] AWS Developer Associate
+- [ ] HashiCorp Terraform Associate
+- [ ] AWS DevOps Professional
+
+### Portfolio Quality
+- [ ] 6 production-grade projects
+- [ ] All code on GitHub with documentation
+- [ ] Architecture diagrams for each project
+- [ ] Performance metrics documented
+- [ ] Cost analysis completed
+- [ ] Security best practices implemented
+
+### Interview Readiness
+- [ ] Can explain all projects in detail
+- [ ] Can design systems on whiteboard
+- [ ] Can troubleshoot complex scenarios
+- [ ] Can discuss trade-offs and decisions
+- [ ] Can demonstrate hands-on expertise
+- [ ] Can articulate business value
+
+---
+
+## CONTINUOUS LEARNING BEYOND MARCH 2025
+
+### Advanced Topics to Explore
+- AWS Advanced Networking
+- Machine Learning on AWS
+- Serverless event architectures
+- FinOps and cost optimization
+- Site Reliability Engineering (SRE)
+- Platform Engineering
+
+### Additional Certifications
+- AWS Solutions Architect Professional
+- AWS Security Specialty
+- Kubernetes certifications (CKA, CKAD)
+- Cloud Security certifications
+
+### Community Contribution
+- Write technical blog posts
+- Create open-source projects
+- Speak at meetups
+- Mentor junior developers
+- Contribute to AWS community
+
+---
+
+**This roadmap provides a complete, structured path from AWS Developer Associate to AWS DevOps Professional with hands-on expertise in 6 months. Follow the modules sequentially, complete all hands-on practice, and build the portfolio projects to achieve mastery.**
