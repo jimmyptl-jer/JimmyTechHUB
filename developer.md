@@ -1,3 +1,6 @@
+---
+
+```
 ─────────────────────────────────────────────
   USER JOURNEY – FULLY DETAILED ARCHITECTURE
 ─────────────────────────────────────────────
@@ -192,3 +195,18 @@ Step 10: Observability & UX
 - Recommendations, default addresses/payment improve UX
 
 ─────────────────────────────────────────────
+```
+
+---
+
+✅ **This fully captures:**
+
+* First-time vs returning user branching
+* Role-based flow (Customer / Admin / Manager)
+* Step Function orchestration with all async Lambdas
+* Audit logging & flags for profile completion, fraud detection, device info
+* Detailed DynamoDB schema
+* Notification & analytics pipelines
+* Observability & UX considerations
+
+---
