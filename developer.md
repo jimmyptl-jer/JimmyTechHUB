@@ -638,3 +638,344 @@ Executes each step in sequence → on any failure, rollback logic (like restock 
 | Monitoring    | **CloudWatch, X-Ray**       | Observability & tracing              |
 
 ---
+
+## ⚙️ STEP 3 — Create Lambda Functions (User Service)
+
+We’ll use the **AWS Console** (no CLI).
+Each Lambda will use the same `lambda-execution-role` you created earlier.
+
+---
+
+### 📍 Overview of User-Service Functions
+
+| Function        | Purpose                         | DynamoDB Table |
+| --------------- | ------------------------------- | -------------- |
+| `register-user` | Register new users              | `Users`        |
+| `login-user`    | Authenticate user credentials   | `Users`        |
+| `get-profile`   | Retrieve user profile by userId | `Users`        |
+
+---
+
+### 🧩 1️⃣ Create `register-user` Lambda
+
+#### 🪜 Steps:
+
+1. Go to **AWS Lambda Console** → [https://console.aws.amazon.com/lambda](https://console.aws.amazon.com/lambda)
+2. Click **Create function**
+3. Choose:
+
+   * **Author from scratch**
+   * Function name: `register-user`
+   * Runtime: **Node.js 18.x**
+   * Execution role: **Use existing role** → select `lambda-execution-role`
+4. Click **Create function**
+
+---
+
+#### 🧠 Add Code
+
+Scroll down to the **Code** editor and replace default code with:
+
+```javascript
+import { DynamoDBClient, PutItemCommand } from "@aws-sdk/client-dynamodb";
+
+const client = new DynamoDBClient({ region: process.env.AWS_REGION });
+
+export const handler = async (event) => {
+  try {
+    const body = JSON.parse(event.body);
+    const { userId, name, email, password } = body;
+
+    if (!userId || !email || !password) {
+      return { statusCode: 400, body: JSON.stringify({ message: "Missing required fields" }) };
+    }
+
+    const params = {
+      TableName: "Users",
+      Item: {
+        userId: { S: userId },
+        name: { S: name },
+        email: { S: email },
+        password: { S: password }, // You can later hash it using bcrypt
+        createdAt: { S: new Date().toISOString() }
+      }
+    };
+
+    await client.send(new PutItemCommand(params));
+
+    return {
+      statusCode: 201,
+      body: JSON.stringify({ message: "User registered successfully" })
+    };
+  } catch (err) {
+    console.error(err);
+    return { statusCode: 500, body: JSON.stringify({ message: "Internal Server Error" }) };
+  }
+};
+```
+
+✅ Click **Deploy**.
+
+---
+
+#### 🧪 Test
+
+1. Go to **Test** tab → Create test event
+2. Event JSON:
+
+```json
+{
+  "body": "{\"userId\": \"U101\", \"name\": \"Jimmy\", \"email\": \"jimmy@example.com\", \"password\": \"test123\"}"
+}
+```
+
+3. Click **Test**
+   ✅ You should see a success message:
+   `{"message": "User registered successfully"}`
+
+Then check your **Users table** in DynamoDB — you’ll see a new item added.
+
+---
+
+### 🧩 2️⃣ Create `login-user` Lambda
+
+#### Steps:
+
+1. Back in Lambda console → **Create function**
+2. Name: `login-user`
+3. Runtime: **Node.js 18.x**
+4. Role: `lambda-execution-role`
+
+#### Code:
+
+```javascript
+import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+
+const client = new DynamoDBClient({ region: process.env.AWS_REGION });
+
+export const handler = async (event) => {
+  const body = JSON.parse(event.body);
+  const { email, password } = body;
+
+  if (!email || !password) {
+    return { statusCode: 400, body: JSON.stringify({ message: "Missing email or password" }) };
+  }
+
+  const params = {
+    TableName: "Users",
+    Key: { userId: { S: email } } // or use email as partition key if preferred
+  };
+
+  try {
+    const result = await client.send(new GetItemCommand(params));
+    if (!result.Item || result.Item.password.S !== password) {
+      return { statusCode: 401, body: JSON.stringify({ message: "Invalid credentials" }) };
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ message: "Login successful", userId: result.Item.userId.S })
+    };
+  } catch (err) {
+    console.error(err);
+    return { statusCode: 500, body: JSON.stringify({ message: "Internal Server Error" }) };
+  }
+};
+```
+
+✅ Click **Deploy → Test** with:
+
+```json
+{
+  "body": "{\"email\": \"jimmy@example.com\", \"password\": \"test123\"}"
+}
+```
+
+---
+
+### 🧩 3️⃣ Create `get-profile` Lambda
+
+#### Steps:
+
+1. Create new function → name: `get-profile`
+2. Runtime: Node.js 18.x
+3. Role: `lambda-execution-role`
+
+#### Code:
+
+```javascript
+import { DynamoDBClient, GetItemCommand } from "@aws-sdk/client-dynamodb";
+
+const client = new DynamoDBClient({ region: process.env.AWS_REGION });
+
+export const handler = async (event) => {
+  const userId = event.queryStringParameters?.userId;
+  if (!userId) {
+    return { statusCode: 400, body: JSON.stringify({ message: "Missing userId" }) };
+  }
+
+  try {
+    const result = await client.send(new GetItemCommand({
+      TableName: "Users",
+      Key: { userId: { S: userId } }
+    }));
+
+    if (!result.Item) {
+      return { statusCode: 404, body: JSON.stringify({ message: "User not found" }) };
+    }
+
+    return {
+      statusCode: 200,
+      body: JSON.stringify({
+        userId: result.Item.userId.S,
+        name: result.Item.name.S,
+        email: result.Item.email.S
+      })
+    };
+  } catch (err) {
+    console.error(err);
+    return { statusCode: 500, body: JSON.stringify({ message: "Internal Server Error" }) };
+  }
+};
+```
+
+✅ Click **Deploy → Test**
+Use this test event:
+
+```json
+{
+  "queryStringParameters": { "userId": "U101" }
+}
+```
+
+---
+
+### ✅ Summary (User Service Complete)
+
+| Lambda Function | Description                |
+| --------------- | -------------------------- |
+| `register-user` | Adds new user to DynamoDB  |
+| `login-user`    | Validates user credentials |
+| `get-profile`   | Retrieves user info by ID  |
+
+---
+
+## API Gateway & Connect Lambdas
+
+---
+
+### 2️⃣ Create a New API
+
+1. API Name: `ServerlessEcommerceAPI`
+2. Description: `API for User, Product, Cart, Order Services`
+3. Endpoint Type: **Regional**
+4. Click **Create API**
+
+---
+
+### 3️⃣ Create Resources (Endpoints)
+
+API Gateway uses **resources + methods**.
+
+#### Resource: `/user`
+
+1. Select your API → **Actions → Create Resource**
+2. Resource Name: `user`
+3. Resource Path: `/user` → Click **Create Resource**
+
+---
+
+### 4️⃣ Create Methods
+
+#### a) `POST /user/register` → `register-user` Lambda
+
+1. Select `/user` → **Actions → Create Method → POST**
+2. Integration type: **Lambda Function**
+3. Lambda Region: same as your Lambda
+4. Lambda Function: `register-user`
+5. Click **Save** → Confirm **Add Permission to API Gateway**
+   ✅ Now `/user/register` will invoke `register-user` Lambda
+
+---
+
+#### b) `POST /user/login` → `login-user` Lambda
+
+1. Repeat above → create **POST method** on `/user/login`
+2. Integration type: **Lambda Function**
+3. Lambda Function: `login-user`
+4. Save & confirm
+
+---
+
+#### c) `GET /user/profile` → `get-profile` Lambda
+
+1. Select `/user` → **Actions → Create Method → GET**
+2. Integration type: **Lambda Function**
+3. Lambda Function: `get-profile`
+4. Save & confirm
+5. **Enable Query String Parameters** in **Method Request**:
+
+   * Add `userId` as a query string parameter
+
+---
+
+### 5️⃣ Deploy API
+
+1. Click **Actions → Deploy API**
+2. Deployment Stage: **New Stage**
+3. Stage Name: `dev`
+4. Click **Deploy**
+5. You’ll get an **Invoke URL**, e.g.:
+
+```
+https://abcd1234.execute-api.eu-west-1.amazonaws.com/dev
+```
+
+---
+
+### 6️⃣ Test Your Endpoints
+
+* **Register User (POST)**
+
+```
+POST https://abcd1234.execute-api.eu-west-1.amazonaws.com/dev/user/register
+Body (JSON):
+{
+  "userId": "U101",
+  "name": "Jimmy",
+  "email": "jimmy@example.com",
+  "password": "test123"
+}
+```
+
+* **Login User (POST)**
+
+```
+POST https://abcd1234.execute-api.eu-west-1.amazonaws.com/dev/user/login
+Body (JSON):
+{
+  "email": "jimmy@example.com",
+  "password": "test123"
+}
+```
+
+* **Get Profile (GET)**
+
+```
+GET https://abcd1234.execute-api.eu-west-1.amazonaws.com/dev/user/profile?userId=U101
+```
+---
+
+### 7️⃣ Next Steps
+
+Once this works for **User Service**, you can repeat the same process for:
+
+| Service         | Resource Path | Lambda Functions                       |
+| --------------- | ------------- | -------------------------------------- |
+| Product Service | `/product`    | `create-product`, `get-products`       |
+| Cart Service    | `/cart`       | `add-to-cart`, `get-cart`              |
+| Order Service   | `/order`      | `create-order`, `validate-order`, etc. |
+
+---
+
+
