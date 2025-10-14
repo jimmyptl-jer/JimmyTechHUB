@@ -977,4 +977,273 @@ Once this works for **User Service**, you can repeat the same process for:
 
 ---
 
+# ** Lambda User Service **
+
+### **1️⃣ Folder Structure**
+
+```
+lambda-user-service/
+├── handlers/
+│   └── userHandler.js       # Main Lambda entry point
+├── controllers/
+│   └── userController.js    # Business logic
+├── routes/
+│   └── userRoutes.js        # Routes mapping
+├── models/
+│   └── User.js              # Dynamoose ORM model
+├── utils/
+│   └── response.js          # HTTP response helper
+├── package.json
+├── package-lock.json
+├── template.yaml            # SAM template
+└── node_modules/
+```
+
+---
+
+### **2️⃣ Install Dependencies**
+
+```bash
+npm init -y
+npm install dynamoose
+```
+
+* `dynamoose` is a DynamoDB ORM for Node.js.
+* Include **any other dependencies** you may need (e.g., `bcrypt` for passwords).
+
+---
+
+### **3️⃣ Dynamoose Model (`models/User.js`)**
+
+```javascript
+import dynamoose from "dynamoose";
+
+// Define Users table schema
+const userSchema = new dynamoose.Schema({
+  userId: { type: String, hashKey: true },
+  name: String,
+  email: String,
+  password: String,
+  createdAt: String,
+});
+
+export const User = dynamoose.model("Users", userSchema);
+```
+
+* `hashKey: true` → primary key
+* Dynamoose automatically maps JavaScript objects to DynamoDB items.
+
+---
+
+### **4️⃣ Utility Function (`utils/response.js`)**
+
+```javascript
+export const success = (data) => ({
+  statusCode: 200,
+  body: JSON.stringify(data),
+});
+
+export const error = (message, status = 500) => ({
+  statusCode: status,
+  body: JSON.stringify({ message }),
+});
+```
+
+* Makes your Lambdas **clean and consistent**.
+
+---
+
+### **5️⃣ Controller Logic (`controllers/userController.js`)**
+
+```javascript
+import { User } from "../models/User.js";
+import { success, error } from "../utils/response.js";
+import bcrypt from "bcryptjs";
+
+export const register = async (body) => {
+  const { userId, name, email, password } = body;
+  if (!userId || !email || !password) {
+    return error("Missing required fields", 400);
+  }
+
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  try {
+    const newUser = new User({
+      userId,
+      name,
+      email,
+      password: hashedPassword,
+      createdAt: new Date().toISOString(),
+    });
+    await newUser.save();
+    return success({ message: "User registered successfully" });
+  } catch (err) {
+    console.error(err);
+    return error("Internal Server Error");
+  }
+};
+
+export const login = async (body) => {
+  const { email, password } = body;
+  if (!email || !password) return error("Missing email or password", 400);
+
+  try {
+    const user = await User.scan("email").eq(email).exec();
+    if (!user || !user[0]) return error("Invalid credentials", 401);
+
+    const valid = await bcrypt.compare(password, user[0].password);
+    if (!valid) return error("Invalid credentials", 401);
+
+    return success({ message: "Login successful", userId: user[0].userId });
+  } catch (err) {
+    console.error(err);
+    return error("Internal Server Error");
+  }
+};
+
+export const getProfile = async (query) => {
+  const { userId } = query;
+  if (!userId) return error("Missing userId", 400);
+
+  try {
+    const user = await User.get(userId);
+    if (!user) return error("User not found", 404);
+
+    return success({
+      userId: user.userId,
+      name: user.name,
+      email: user.email,
+    });
+  } catch (err) {
+    console.error(err);
+    return error("Internal Server Error");
+  }
+};
+```
+
+* **Business logic separated** from handler → clean and testable.
+
+---
+
+### **6️⃣ Routes Mapping (`routes/userRoutes.js`)**
+
+```javascript
+import { register, login, getProfile } from "../controllers/userController.js";
+
+export const route = async (path, method, body, query) => {
+  switch (path) {
+    case "/user/register":
+      if (method === "POST") return await register(body);
+      break;
+    case "/user/login":
+      if (method === "POST") return await login(body);
+      break;
+    case "/user/profile":
+      if (method === "GET") return await getProfile(query);
+      break;
+    default:
+      return { statusCode: 404, body: JSON.stringify({ message: "Route not found" }) };
+  }
+};
+```
+
+* Central routing inside Lambda.
+* No need for Express.js — **API Gateway passes `path` and `method`**.
+
+---
+
+### **7️⃣ Lambda Handler (`handlers/userHandler.js`)**
+
+```javascript
+import { route } from "../routes/userRoutes.js";
+
+export const handler = async (event) => {
+  const { path, httpMethod, body, queryStringParameters } = event;
+  let parsedBody = {};
+  if (body) parsedBody = JSON.parse(body);
+
+  return await route(path, httpMethod, parsedBody, queryStringParameters);
+};
+```
+
+* Lambda entry point → **delegates to routes → controllers → models**.
+
+---
+
+### **8️⃣ SAM Template (`template.yaml`)**
+
+```yaml
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Serverless User Service
+
+Globals:
+  Function:
+    Runtime: nodejs18.x
+    MemorySize: 128
+    Timeout: 10
+    Environment:
+      Variables:
+        USERS_TABLE: Users
+
+Resources:
+  UserServiceFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: handlers/userHandler.handler
+      CodeUri: .
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: Users
+      Events:
+        RegisterUser:
+          Type: Api
+          Properties:
+            Path: /user/register
+            Method: post
+        LoginUser:
+          Type: Api
+          Properties:
+            Path: /user/login
+            Method: post
+        GetProfile:
+          Type: Api
+          Properties:
+            Path: /user/profile
+            Method: get
+```
+
+---
+
+### **9️⃣ Deploy**
+
+```bash
+sam build
+sam deploy --guided
+```
+
+* Includes **folder structure and `node_modules`**.
+* Lambda in AWS `/var/task` has **handlers/, controllers/, routes/, models/, utils/**.
+
+---
+
+### **10️⃣ Test API Endpoints**
+
+```bash
+# Register
+curl -X POST https://<api-gateway-url>/user/register \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"U101","name":"Jimmy","email":"jimmy@example.com","password":"test123"}'
+
+# Login
+curl -X POST https://<api-gateway-url>/user/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"jimmy@example.com","password":"test123"}'
+
+# Get Profile
+curl -X GET "https://<api-gateway-url>/user/profile?userId=U101"
+```
+---
+
 
