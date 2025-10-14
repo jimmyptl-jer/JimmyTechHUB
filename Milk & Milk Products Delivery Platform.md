@@ -1,3 +1,7 @@
+
+---
+
+```
 ┌───────────────────────────────────────────────────────────────┐
 │                        USER ACTIONS                            │
 └───────────────────────────────────────────────────────────────┘
@@ -187,3 +191,7 @@ AWS SERVICES USED
 - Optional: S3 → Reports, invoices
 - Optional: SES → Email
 - Optional: Pinpoint → SMS
+```
+
+---
+
