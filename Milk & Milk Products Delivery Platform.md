@@ -359,3 +359,177 @@ AWS SERVICES USED
 | Lambda SDK        | Lambda → Lambda            | Synchronous service communication   |
 
 ---
+Perfect! Let’s create the **Ultimate Blueprint for your Milk Delivery System** as a **full terminal-style diagram** combining:
+
+* **All Lambdas with folder structure** (handlers/routes/controllers/models/utils)
+* **Sync vs async triggers** (color-coded)
+* **Database tables with all fields & statuses**
+* **AWS services at each stage with arrows & payloads**
+* **Where, How, Why, What** for each component
+
+Here’s the detailed visual blueprint:
+
+```
+───────────────────────────────────────────────────────────────
+                          USER ACTIONS
+───────────────────────────────────────────────────────────────
+Web/Mobile App
+Actions:
+- Register / Login
+- Update Profile
+- Browse Milk Products
+- Add to Cart / Place Order
+- Subscribe for Daily Milk
+- Track Order / Subscription
+- View Payment History
+Triggers → API Gateway
+───────────────────────────────────────────────────────────────
+API GATEWAY (HTTP Endpoints)
+───────────────────────────────────────────────────────────────
+POST /user/register, POST /user/login
+GET /user/profile
+POST /cart/add, GET /cart
+POST /order/create, POST /order/subscribe, GET /order/track
+POST /payment/pay, GET /payment/history
+→ Invokes respective Lambdas
+───────────────────────────────────────────────────────────────
+USER LAMBDA (Node.js Modular)
+───────────────────────────────────────────────────────────────
+Folder Structure:
+handlers/userHandler.js → Entry Point
+routes/userRoutes.js → Map endpoints to controllers
+controllers/userController.js → Business Logic
+models/User.js → Dynamoose ORM
+utils/response.js → HTTP helpers
+
+Actions:
+- registerUser(event)
+- loginUser(event)
+- getProfile(event)
+→ Calls DynamoDB Users table
+
+Payload Example (register):
+Request: { userId, name, email, password }
+Response: { message: "User registered successfully", userId }
+
+Async Triggers:
+1️⃣ Analytics Lambda (SQS) → { eventType: "USER_REGISTERED", userId, timestamp }
+2️⃣ Notification Lambda (SNS/EventBridge) → { userId, type: "WELCOME_EMAIL", message }
+───────────────────────────────────────────────────────────────
+DYNAMODB TABLES
+───────────────────────────────────────────────────────────────
+USERS TABLE
+userId (PK), name, email, passwordHash, phone, address, createdAt, updatedAt
+
+PRODUCTS TABLE
+productId (PK), name, description, price, stock, category, createdAt, updatedAt
+
+CARTS TABLE
+cartId (PK), userId (FK), items[{productId, qty, price}], totalAmount, createdAt, updatedAt
+
+ORDERS TABLE
+orderId (PK), userId (FK), cartItems[{productId, qty, price}], totalAmount, deliverySlot,
+orderStatus(CREATED→CONFIRMED→PACKED→OUT_FOR_DELIVERY→DELIVERED→CANCELLED→RETURNED),
+paymentStatus(PENDING→SUCCESS/FAILED→REFUNDED), subscriptionId, createdAt, updatedAt
+
+PAYMENTS TABLE
+paymentId (PK), orderId (FK), amount, paymentMethod(CARD,UPI,CASH),
+status(PENDING→SUCCESS/FAILED→REFUNDED), transactionId, createdAt, updatedAt
+
+DELIVERIES TABLE
+deliveryId (PK), orderId (FK), userId (FK), deliverySlot,
+deliveryStatus(ASSIGNED→PICKED_UP→IN_TRANSIT→DELIVERED→FAILED/CANCELLED),
+deliveryPersonId(FK, optional), trackingUrl(optional), createdAt, updatedAt
+
+SUBSCRIPTIONS TABLE
+subscriptionId (PK), userId (FK), productId, qty, frequency(DAILY/WEEKLY),
+startDate, endDate, status(ACTIVE/PAUSED/CANCELLED), createdAt, updatedAt
+───────────────────────────────────────────────────────────────
+USER BROWSING & CART
+───────────────────────────────────────────────────────────────
+Product Lambda (sync)
+Request: { category, filters }
+Response: [{ productId, name, price, stock }]
+→ Stores in PRODUCTS table
+
+Cart Lambda (sync)
+Request: { userId, productId, qty }
+Response: { cartId, items[...] }
+→ Stores in CARTS table
+───────────────────────────────────────────────────────────────
+ORDER & PAYMENT FLOW
+───────────────────────────────────────────────────────────────
+Order Lambda (sync)
+Request: { userId, cartItems, totalAmount, deliverySlot }
+Response: { orderId, status: "CREATED" }
+→ Stores in ORDERS table
+
+Payment Lambda (sync/async)
+Request: { orderId, amount, paymentMethod }
+Response: { paymentId, status: "SUCCESS/FAILED" }
+→ Stores in PAYMENTS table
+
+Async triggers:
+- Notification Lambda → { userId, type: "ORDER_CONFIRMED", message }
+- Analytics Lambda → { eventType: "ORDER_PLACED", userId, orderId }
+───────────────────────────────────────────────────────────────
+DELIVERY & TRACKING
+───────────────────────────────────────────────────────────────
+Delivery Lambda (sync/async)
+Request: { orderId, deliverySlot, address }
+Response: { deliveryId, status: "ASSIGNED" }
+→ Stores in DELIVERIES table
+
+Notifications:
+- Notification Lambda → { userId, type: "DELIVERY_UPDATE", message }
+- Analytics Lambda → { eventType: "DELIVERY_UPDATED", userId, orderId }
+───────────────────────────────────────────────────────────────
+SUBSCRIPTIONS
+───────────────────────────────────────────────────────────────
+Subscription Lambda / Order Lambda
+- Recurring Milk orders
+- Frequency: Daily/Weekly
+- Async triggers:
+  * Analytics → SUBSCRIPTION_CREATED
+  * Notification → SUBSCRIPTION_ACTIVE/PAUSED/CANCELLED
+───────────────────────────────────────────────────────────────
+ADMIN LAMBDA
+───────────────────────────────────────────────────────────────
+Endpoints: POST /product/add, PATCH /product/update, PATCH /delivery/update
+Updates:
+- PRODUCTS table
+- DELIVERIES table
+- ORDERS table
+Async triggers:
+- Notification Lambda → Admin/Delivery updates
+- Analytics Lambda → Admin actions
+───────────────────────────────────────────────────────────────
+AWS SERVICES INTEGRATION
+───────────────────────────────────────────────────────────────
+API Gateway → Frontend HTTP requests
+Lambda → Microservices logic (User, Product, Cart, Order, Payment, Delivery, Notification, Analytics, Admin)
+DynamoDB → Users, Products, Carts, Orders, Payments, Deliveries, Subscriptions
+SQS → Async events (Analytics)
+SNS / EventBridge → Async notifications (Email/SMS)
+CloudWatch → Logging & monitoring
+Cognito/IAM → Auth & permissions
+SES / Pinpoint → Email/SMS
+S3 → Reports & invoices
+Lambda SDK → Sync calls between Lambdas (User→Order→Payment)
+───────────────────────────────────────────────────────────────
+STATUS FLOWS
+───────────────────────────────────────────────────────────────
+Order Status:
+CREATED → CONFIRMED → PACKED → OUT_FOR_DELIVERY → DELIVERED
+CANCELLED / RETURNED possible at multiple stages
+
+Payment Status:
+PENDING → SUCCESS / FAILED → REFUNDED
+
+Delivery Status:
+ASSIGNED → PICKED_UP → IN_TRANSIT → DELIVERED → FAILED / CANCELLED
+───────────────────────────────────────────────────────────────
+```
+
+---
+
