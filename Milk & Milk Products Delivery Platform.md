@@ -192,6 +192,170 @@ AWS SERVICES USED
 - Optional: SES → Email
 - Optional: Pinpoint → SMS
 ```
+---
+
+### **1️⃣ API Gateway**
+
+* **Where:** Front of all Lambdas; handles HTTP requests from Web/Mobile apps.
+* **How:** Receives REST API calls → triggers corresponding Lambda.
+* **Why:** Provides a scalable, secure HTTP endpoint for your users/admins.
+* **What:** Endpoints like `/user/register`, `/order/create`, `/payment/pay`.
 
 ---
 
+### **2️⃣ AWS Lambda Functions**
+
+* **Where:** Core logic layer; each microservice has its own Lambda.
+* **How:** Triggered via API Gateway (sync) or SNS/EventBridge/SQS (async).
+* **Why:** Serverless, auto-scaling, pay-per-use compute for modular services.
+* **What:**
+
+  * **User Lambda** → register/login/update profile
+  * **Product Lambda** → list/view products
+  * **Cart Lambda** → add/view cart items
+  * **Order Lambda** → create/validate/subscribe orders
+  * **Payment Lambda** → process payments
+  * **Delivery Lambda** → assign, track, update deliveries
+  * **Notification Lambda** → email/SMS notifications
+  * **Analytics Lambda** → event logging and reporting
+  * **Admin Lambda** → product/delivery updates
+
+---
+
+### **3️⃣ DynamoDB**
+
+* **Where:** All persistent storage for users, products, orders, etc.
+* **How:** Accessed via Dynamoose ORM (Node.js) or AWS SDK.
+* **Why:** Fully managed, highly scalable NoSQL DB for fast lookups.
+* **What:**
+
+| Table                | Key Fields          | Other Fields                                                                                                     | Notes                        |
+| -------------------- | ------------------- | ---------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| Users                | userId (PK)         | name, email, passwordHash, phone, address, createdAt, updatedAt                                                  | Stores all registered users  |
+| Products             | productId (PK)      | name, description, price, stock, category, createdAt, updatedAt                                                  | Stores milk & dairy products |
+| Carts                | cartId (PK)         | userId, items[], totalAmount, createdAt, updatedAt                                                               | Tracks user shopping cart    |
+| Orders               | orderId (PK)        | userId, cartItems[], totalAmount, deliverySlot, orderStatus, paymentStatus, subscriptionId, createdAt, updatedAt | Tracks each order            |
+| Payments             | paymentId (PK)      | orderId, amount, paymentMethod, status, transactionId, createdAt, updatedAt                                      | Tracks payment history       |
+| Deliveries           | deliveryId (PK)     | orderId, userId, deliverySlot, deliveryStatus, deliveryPersonId, trackingUrl, createdAt, updatedAt               | Tracks delivery lifecycle    |
+| Subscriptions        | subscriptionId (PK) | userId, productId, qty, frequency, startDate, endDate, status, createdAt, updatedAt                              | Recurring orders             |
+| Analytics (Optional) | eventId (PK)        | eventType, userId, orderId, timestamp, details                                                                   | Event-driven analytics log   |
+
+---
+
+### **4️⃣ SNS / EventBridge**
+
+* **Where:** Asynchronous event handling between services.
+* **How:** Lambdas publish events → subscribed Lambdas (Notification, Analytics) receive them.
+* **Why:** Decouples services; ensures notifications and analytics do not block main workflows.
+* **What:**
+
+  * `USER_REGISTERED` → triggers welcome email
+  * `ORDER_CONFIRMED` → triggers email/SMS
+  * `DELIVERY_UPDATE` → triggers notifications
+  * `PAYMENT_COMPLETED` → triggers notifications and analytics
+
+---
+
+### **5️⃣ SQS**
+
+* **Where:** Queue for asynchronous processing of heavy workloads.
+* **How:** Lambdas push messages to SQS → Analytics Lambda polls and processes events.
+* **Why:** Handles spikes, ensures eventual processing, decouples services.
+* **What:**
+
+  * Queue messages for logging orders, payments, deliveries, subscriptions.
+
+---
+
+### **6️⃣ CloudWatch**
+
+* **Where:** Across all Lambdas and AWS resources.
+* **How:** Logs Lambda executions, monitors performance metrics, triggers alarms.
+* **Why:** Observability, debugging, performance monitoring, alerts.
+* **What:**
+
+  * Lambda logs → API Gateway requests, errors
+  * Metrics → execution duration, errors, throttles
+
+---
+
+### **7️⃣ Cognito / IAM**
+
+* **Where:** Authentication & access control.
+* **How:** Cognito handles user sign-up/sign-in; IAM roles define Lambda permissions.
+* **Why:** Secure user management and service-to-service access.
+* **What:**
+
+  * Cognito → JWT token-based auth for API calls
+  * IAM → Lambda permissions, SQS/SNS access
+
+---
+
+### **8️⃣ SES / Pinpoint (Optional)**
+
+* **Where:** Notification Lambda integration.
+* **How:** SES sends emails, Pinpoint sends SMS.
+* **Why:** Communication with users.
+* **What:**
+
+  * WELCOME_EMAIL, ORDER_CONFIRMED, DELIVERY_UPDATE
+
+---
+
+### **9️⃣ S3 (Optional)**
+
+* **Where:** Storage for invoices, reports, logs.
+* **How:** Analytics Lambda or Payment Lambda writes reports to S3.
+* **Why:** Centralized storage of documents & large logs.
+* **What:**
+
+  * PDF invoices
+  * CSV/JSON analytics reports
+
+---
+
+### **10️⃣ AWS SDK Integration (Sync Calls)**
+
+* **Where:** Lambda-to-Lambda communication.
+* **How:** User Lambda calls Order Lambda → Payment Lambda via `AWS.Lambda.invoke()`.
+* **Why:** Some flows need synchronous execution (e.g., payment before order confirmation).
+* **What:**
+
+  * User places order → triggers Order Lambda → triggers Payment Lambda → confirmation → Notification Lambda (async)
+
+---
+
+### **11️⃣ Status Flows**
+
+**Order Status:**
+`CREATED → CONFIRMED → PACKED → OUT_FOR_DELIVERY → DELIVERED`
+`CANCELLED / RETURNED` at any stage
+
+**Payment Status:**
+`PENDING → SUCCESS / FAILED → REFUNDED`
+
+**Delivery Status:**
+`ASSIGNED → PICKED_UP → IN_TRANSIT → DELIVERED`
+`FAILED / CANCELLED`
+
+**Subscription Status:**
+`ACTIVE → PAUSED → CANCELLED`
+
+---
+
+### **12️⃣ Key Interactions / “Why & How”**
+
+| Service           | Interacts With             | Purpose                             |
+| ----------------- | -------------------------- | ----------------------------------- |
+| API Gateway       | User/Admin App → Lambdas   | HTTP request handling               |
+| Lambda            | DynamoDB, SQS, SNS         | Execute business logic & store data |
+| DynamoDB          | Lambdas                    | Persistent storage for all entities |
+| SNS / EventBridge | Notification Lambda        | Async notification delivery         |
+| SQS               | Analytics Lambda           | Async logging & processing          |
+| CloudWatch        | All Lambdas                | Observability & monitoring          |
+| Cognito / IAM     | API Gateway & Lambdas      | Authentication & authorization      |
+| SES / Pinpoint    | Notification Lambda        | Email/SMS delivery                  |
+| S3                | Analytics / Payment Lambda | Reports & invoices                  |
+| Lambda SDK        | Lambda → Lambda            | Synchronous service communication   |
+
+---
