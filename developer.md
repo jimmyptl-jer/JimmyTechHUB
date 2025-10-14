@@ -1,5 +1,3 @@
-**blueprint before you build it on AWS Console**.
-
 ---
 
 # 🧩 SERVERLESS E-COMMERCE DATA FLOW (DETAILED)
