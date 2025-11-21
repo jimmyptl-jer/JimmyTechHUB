@@ -579,6 +579,340 @@ TIP:
     vim sql_revision.txt
 ```
 
+
+---
+
+## 1. Primary Key & Foreign Key (the basics)
+
+### Primary Key (PK)
+
+* A **column or set of columns** that **uniquely identifies** a row.
+* Cannot be `NULL`.
+* One primary key per table.
+
+Example – `customers` table:
+
+```sql
+CREATE TABLE customers (
+    id           INT PRIMARY KEY,       -- PK
+    name         VARCHAR(100),
+    email        VARCHAR(100) UNIQUE
+);
+```
+
+* `id` is the **primary key**.
+* Each customer has a unique `id`.
+
+---
+
+### Foreign Key (FK)
+
+* A column that **refers to the primary key** of another table.
+* Creates a **relationship** between two tables.
+* The FK value must either:
+
+  * match an existing PK value in the parent table, or
+  * be `NULL` (if allowed).
+
+Example – `orders` table:
+
+```sql
+CREATE TABLE orders (
+    id           INT PRIMARY KEY,
+    customer_id  INT,
+    order_date   DATE,
+    amount       DECIMAL(10,2),
+    CONSTRAINT fk_orders_customer
+      FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+```
+
+* `orders.customer_id` is a **foreign key**.
+* It points to `customers.id`.
+* You **cannot** insert `customer_id = 999` if there is no customer with `id = 999`.
+
+---
+
+### In plain English
+
+* **Primary Key** → “Who are you?”
+* **Foreign Key** → “Who do you belong to / refer to?”
+
+---
+
+## 2. Types of Relationships
+
+### 2.1 One-to-One (1 : 1)
+
+> One row in Table A ↔ one row in Table B
+
+Example:
+
+* One employee has **one** HR profile.
+* `employees` table + `employee_profiles` table.
+
+#### Tables
+
+```sql
+CREATE TABLE employees (
+    id          INT PRIMARY KEY,
+    name        VARCHAR(100),
+    email       VARCHAR(100) UNIQUE
+);
+
+CREATE TABLE employee_profiles (
+    id          INT PRIMARY KEY,
+    employee_id INT UNIQUE,   -- UNIQUE makes it truly 1:1
+    address     VARCHAR(255),
+    dob         DATE,
+    CONSTRAINT fk_profile_employee
+      FOREIGN KEY (employee_id) REFERENCES employees(id)
+);
+```
+
+#### Why `UNIQUE` on `employee_id`?
+
+* Without `UNIQUE`, multiple profiles could point to one employee → that becomes 1–many.
+* With `UNIQUE`:
+
+  * 1 employee → at most 1 profile
+  * 1 profile → belongs to exactly 1 employee
+
+#### ASCII picture
+
+```text
+employees (1) ───── (1) employee_profiles
+  PK id                  PK id
+                          FK employee_id → employees.id (UNIQUE)
+```
+
+**Use cases:**
+
+* Splitting sensitive/optional data into a separate table.
+* Performance/normalization reasons (e.g., big JSON configs or large text).
+
+---
+
+### 2.2 One-to-Many (1 : N) – the most common
+
+> One row in Table A ↔ many rows in Table B
+
+Example:
+
+* One **customer** can have **many orders**.
+* But each **order** belongs to exactly **one customer**.
+
+#### Tables
+
+```sql
+CREATE TABLE customers (
+    id      INT PRIMARY KEY,
+    name    VARCHAR(100)
+);
+
+CREATE TABLE orders (
+    id           INT PRIMARY KEY,
+    customer_id  INT,
+    order_date   DATE,
+    amount       DECIMAL(10,2),
+    CONSTRAINT fk_orders_customer
+      FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+```
+
+#### ASCII picture
+
+```text
+customers (1) ───────< orders (many)
+   PK id                PK id
+                        FK customer_id → customers.id
+```
+
+* “crow’s foot” (`<`) on the “many” side.
+
+#### Example queries
+
+All orders of a particular customer:
+
+```sql
+SELECT o.*
+FROM orders o
+JOIN customers c ON o.customer_id = c.id
+WHERE c.id = 10;
+```
+
+Customer + their order amount:
+
+```sql
+SELECT c.name, o.id AS order_id, o.amount
+FROM customers c
+JOIN orders o ON o.customer_id = c.id;
+```
+
+**Use cases:**
+
+* Customer → Orders
+* Order → Order Items
+* Blog User → Posts
+* Department → Employees
+
+Basically: object → many related child objects.
+
+---
+
+### 2.3 Many-to-Many (M : N)
+
+> Many rows in A ↔ many rows in B
+
+Relational databases **don’t support this directly**.
+We implement it using a **junction (bridge) table**.
+
+Example:
+
+* One **student** can join many **courses**.
+* One **course** can have many **students**.
+
+#### Step 1: main tables
+
+```sql
+CREATE TABLE students (
+    id    INT PRIMARY KEY,
+    name  VARCHAR(100)
+);
+
+CREATE TABLE courses (
+    id    INT PRIMARY KEY,
+    name  VARCHAR(100)
+);
+```
+
+#### Step 2: junction table
+
+```sql
+CREATE TABLE student_courses (
+    student_id INT,
+    course_id  INT,
+    enrollment_date DATE,
+    PRIMARY KEY (student_id, course_id),  -- composite PK
+    FOREIGN KEY (student_id) REFERENCES students(id),
+    FOREIGN KEY (course_id)  REFERENCES courses(id)
+);
+```
+
+#### ASCII picture
+
+```text
+students                     courses
+   PK id                        PK id
+     ^                            ^
+     |                            |
+     |                            |
+     +-------- student_courses ----+
+               PK (student_id, course_id)
+               FK student_id → students.id
+               FK course_id  → courses.id
+```
+
+Now relationships:
+
+* 1 student → many rows in `student_courses`
+* 1 course → many rows in `student_courses`
+* Together this represents Many-to-Many.
+
+#### Example query: all courses of a student
+
+```sql
+SELECT s.name AS student, c.name AS course
+FROM students s
+JOIN student_courses sc ON sc.student_id = s.id
+JOIN courses c          ON sc.course_id = c.id
+WHERE s.id = 5;
+```
+
+#### Example query: all students in a course
+
+```sql
+SELECT c.name AS course, s.name AS student
+FROM courses c
+JOIN student_courses sc ON sc.course_id = c.id
+JOIN students s         ON sc.student_id = s.id
+WHERE c.id = 3;
+```
+
+**Use cases:**
+
+* Students ↔ Courses
+* Products ↔ Tags
+* Users ↔ Roles
+* Doctors ↔ Patients (via Appointments)
+
+---
+
+## 3. How Relationships + Joins Work Together
+
+Think like this:
+
+* PK/FK = how data is **stored & constrained**
+* JOIN = how data is **read across tables**
+
+Example (One-to-Many: Customer → Orders):
+
+```sql
+SELECT c.id, c.name, o.id AS order_id, o.amount
+FROM customers c
+JOIN orders o
+  ON o.customer_id = c.id;
+```
+
+Example (Many-to-Many: Students ↔ Courses):
+
+```sql
+SELECT s.name AS student, c.name AS course
+FROM students s
+JOIN student_courses sc ON sc.student_id = s.id
+JOIN courses c          ON sc.course_id = c.id;
+```
+
+---
+
+## 4. Tiny Terminal Cheatsheet
+
+You can literally paste this into your notes:
+
+```text
+DATABASE RELATIONSHIPS (SQL) – QUICK REFERENCE
+----------------------------------------------
+
+1) PRIMARY KEY (PK)
+   - Uniquely identifies a row
+   - Not NULL
+   - Example: customers.id
+
+2) FOREIGN KEY (FK)
+   - Column that points to another table’s PK
+   - Enforces relationship & data integrity
+   - Example: orders.customer_id → customers.id
+
+3) ONE-TO-ONE (1:1)
+   - One row in A ↔ one row in B
+   - Implement: FK in child with UNIQUE
+   - Example: employees.id ↔ employee_profiles.employee_id (UNIQUE FK)
+
+4) ONE-TO-MANY (1:N)
+   - One row in A ↔ many rows in B
+   - Implement: FK in child table
+   - Example: customers.id → orders.customer_id
+
+5) MANY-TO-MANY (M:N)
+   - Many rows in A ↔ many rows in B
+   - Implement: junction table with two FKs
+   - Example:
+       students.id → student_courses.student_id
+       courses.id  → student_courses.course_id
+```
+
+---
+
 # Complete SQL Reference for Data Analysts
 
 ## Essential SQL Commands & Queries
