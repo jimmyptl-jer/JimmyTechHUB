@@ -911,6 +911,596 @@ DATABASE RELATIONSHIPS (SQL) – QUICK REFERENCE
        courses.id  → student_courses.course_id
 ```
 
+
+```text
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                                    MEGA ERP - COMPREHENSIVE ENTITY RELATIONSHIP DIAGRAM
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                         CORE SYSTEM TABLES                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────┐
+│              users               │
+├──────────────────────────────────┤
+│ PK  id                 INTEGER   │
+│     username           VARCHAR   │
+│     email              VARCHAR   │
+│     password_hash      VARCHAR   │
+│     role               VARCHAR   │   -- e.g. 'admin','sales','accounts'
+│     is_active          BOOLEAN   │
+│     created_at         TIMESTAMP │
+│     updated_at         TIMESTAMP │
+└──────────────────────────────────┘
+         │
+         │ (created_by / approved_by relationships to multiple tables)
+         │
+         ├─────────────────────────────────────────────────────────────────────────────────────────────┐
+         │                                                                                             │
+         ▼                                                                                             ▼
+  (sales_orders, invoices, payments, purchase_orders, goods_receipts, stock_movements, journal_entries, ...)
+         
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                      REFERENCE & MASTER DATA                                            │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────┐       ┌──────────────────────────────────┐       ┌───────────────────┐
+│           countries              │       │           currencies             │       │     tax_rates     │
+├──────────────────────────────────┤       ├──────────────────────────────────┤       ├───────────────────┤
+│ PK  country_code      CHAR(2)    │       │ PK  currency_code    CHAR(3)     │       │ PK  id    INTEGER │
+│     name              VARCHAR    │       │     name             VARCHAR     │       │     name  VARCHAR │
+│     iso_numeric       CHAR(3)    │       │     symbol           VARCHAR     │       │     rate  DEC(5,2)│
+│     phone_code        VARCHAR    │       │     decimal_places   INTEGER     │       │ FK  country_code  │
+│     is_active         BOOLEAN    │       │     is_active        BOOLEAN     │       │     effective_from│
+└──────────────────────────────────┘       └──────────────────────────────────┘       │     effective_to  │
+         ▲                                          ▲                                 │     is_active     │
+         │                                          │                                 └───────────────────┘
+         │                                          │                                          ▲
+         │                                          │                                          │
+         │                                          │                                          │
+         │                                          │                                    (used by products,
+         │                                          │                                     sales_order_items,
+         │                                          │                                     invoice_items,
+         │                                          │                                     purchase_order_items)
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                         ADDRESS MANAGEMENT                                              │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────┐
+│                  addresses                       │
+├──────────────────────────────────────────────────┤
+│ PK  id                    INTEGER                │
+│     address_line1         VARCHAR                │
+│     address_line2         VARCHAR                │
+│     city                  VARCHAR                │
+│     state                 VARCHAR                │
+│     postal_code           VARCHAR                │
+│ FK  country_code  ──────> countries.country_code │
+│     latitude              DECIMAL                │
+│     longitude             DECIMAL                │
+│     is_active             BOOLEAN                │
+│     created_at            TIMESTAMP              │
+└──────────────────────────────────────────────────┘
+                    │
+                    │ (referenced by multiple entities)
+                    │
+     ┌───────────────────────────────┬───────────────────────────────┬───────────────────────────────┐
+     ▼                               ▼                               ▼                               ▼
+(customers.billing_address)  (customers.shipping_address)   (suppliers.address)             (warehouses.address)
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     CUSTOMER MANAGEMENT MODULE                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                              customers                                │
+├───────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                               │
+│ UQ  customer_code               VARCHAR                               │
+│     name                        VARCHAR                               │
+│     email                       VARCHAR                               │
+│     phone                       VARCHAR                               │
+│     mobile                      VARCHAR                               │
+│     tax_id                      VARCHAR                               │
+│ FK  billing_address_id   ─────> addresses.id                          │
+│ FK  shipping_address_id  ─────> addresses.id                          │
+│ FK  currency_code        ─────> currencies.currency_code              │
+│     credit_limit                DECIMAL                               │
+│     payment_terms_days          INTEGER                               │
+│     is_active                   BOOLEAN                               │
+│     created_at                  TIMESTAMP                             │
+│     updated_at                  TIMESTAMP                             │
+└───────────────────────────────────────────────────────────────────────┘
+                    │
+                    │ (customer has many related records)
+                    │
+          ┌──────────┴──────────────┬───────────────┬─────────────────────────┐
+          ▼                         ▼               ▼                         ▼
+┌───────────────────┐     ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐
+│   sales_orders    │     │     invoices      │  │     payments      │  │ customer_contacts │
+└───────────────────┘     └───────────────────┘  └───────────────────┘  └───────────────────┘
+
+
+┌────────────────────────────────────────────────────┐
+│             customer_contacts                      │
+├────────────────────────────────────────────────────┤
+│ PK  id                     INTEGER                 │
+│ FK  customer_id     ─────> customers.id            │
+│     name                   VARCHAR                 │
+│     email                  VARCHAR                 │
+│     phone                  VARCHAR                 │
+│     position               VARCHAR                 │
+│     is_primary             BOOLEAN                 │
+│     notes                  TEXT                    │
+└────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                     SUPPLIER MANAGEMENT MODULE                                          │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────┐
+│                              suppliers                                │
+├───────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                               │
+│ UQ  supplier_code               VARCHAR                               │
+│     name                        VARCHAR                               │
+│     email                       VARCHAR                               │
+│     phone                       VARCHAR                               │
+│     mobile                      VARCHAR                               │
+│     tax_id                      VARCHAR                               │
+│ FK  address_id           ─────> addresses.id                          │
+│ FK  currency_code        ─────> currencies.currency_code              │
+│     payment_terms_days          INTEGER                               │
+│     is_active                   BOOLEAN                               │
+│     created_at                  TIMESTAMP                             │
+│     updated_at                  TIMESTAMP                             │
+└───────────────────────────────────────────────────────────────────────┘
+                    │
+                    │ (supplier has many purchase_orders, supplier_invoices, supplier_payments)
+                    │
+          ┌──────────┴──────────────┬─────────────────────┬─────────────────────┐
+          ▼                         ▼                     ▼                     ▼
+┌───────────────────┐     ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐
+│  purchase_orders  │     │ supplier_invoices │  │ supplier_payments │  │  supplier_contacts│
+└───────────────────┘     └───────────────────┘  └───────────────────┘  └───────────────────┘
+
+(You can model supplier_invoices & supplier_payments similar to customer invoices/payments if needed)
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    PRODUCT CATALOG MODULE                                               │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────┐
+│          product_categories                      │
+├──────────────────────────────────────────────────┤
+│ PK  id                    INTEGER                │
+│     name                  VARCHAR                │
+│     description           TEXT                   │
+│ FK  parent_id      ─────> product_categories.id  │  ◄── SELF REFERENCE (category tree)
+│     level                 INTEGER                │
+│     path                  VARCHAR                │
+│     is_active             BOOLEAN                │
+│     created_at            TIMESTAMP              │
+└──────────────────────────────────────────────────┘
+                    │
+                    │ (category has many products)
+                    │
+                    ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                                products                                      │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                                       │
+│ UQ  sku                         VARCHAR                                       │
+│     name                        VARCHAR                                       │
+│     description                 TEXT                                          │
+│     unit_of_measure             VARCHAR                                       │
+│     sales_price                 DECIMAL                                       │
+│     purchase_price              DECIMAL                                       │
+│     standard_cost               DECIMAL                                       │
+│ FK  category_id          ─────> product_categories.id                         │
+│ FK  tax_rate_id          ─────> tax_rates.id                                  │
+│     reorder_level               INTEGER                                       │
+│     reorder_quantity            INTEGER                                       │
+│     min_stock_level             INTEGER                                       │
+│     max_stock_level             INTEGER                                       │
+│     is_active                   BOOLEAN                                       │
+│     is_sellable                 BOOLEAN                                       │
+│     is_purchasable              BOOLEAN                                       │
+│     created_at                  TIMESTAMP                                     │
+│     updated_at                  TIMESTAMP                                     │
+└───────────────────────────────────────────────────────────────────────────────┘
+                    │
+                    │ (product used across modules)
+                    │
+      ┌──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┐
+      ▼              ▼              ▼              ▼              ▼              ▼
+┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+│ sales_order │ │ invoice_    │ │ purchase_   │ │ goods_      │ │ stock_      │ │ bom_        │
+│ items       │ │ items       │ │ order_items │ │ receipt_items│ │ movements   │ │ components  │
+└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
+
+
+┌────────────────────────────────────────────┐
+│             bom_components                 │
+├────────────────────────────────────────────┤
+│ PK  id                       INTEGER       │
+│ FK  parent_product_id ────> products.id    │ -- finished good
+│ FK  component_product_id -> products.id    │ -- raw/child item
+│     quantity_per_parent      DECIMAL       │
+│     scrap_factor             DECIMAL       │
+│     is_active                BOOLEAN       │
+└────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                  WAREHOUSE & INVENTORY MODULE                                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────┐
+│                warehouses                        │
+├──────────────────────────────────────────────────┤
+│ PK  id                    INTEGER                │
+│ UQ  code                  VARCHAR                │
+│     name                  VARCHAR                │
+│ FK  address_id     ─────> addresses.id           │
+│     manager_name          VARCHAR                │
+│     capacity              DECIMAL                │
+│     is_active             BOOLEAN                │
+│     created_at            TIMESTAMP              │
+└──────────────────────────────────────────────────┘
+                    │
+                    │ (warehouse has many stock_movements, goods_receipts, locations)
+                    │
+          ┌──────────┴──────────────┬─────────────────────┐
+          ▼                         ▼                     ▼
+┌───────────────────┐     ┌───────────────────┐   ┌───────────────────┐
+│  stock_movements  │     │  goods_receipts   │   │ warehouse_locations│
+└───────────────────┘     └───────────────────┘   └───────────────────┘
+
+┌────────────────────────────────────────────────────┐
+│           warehouse_locations                      │
+├────────────────────────────────────────────────────┤
+│ PK  id                     INTEGER                 │
+│ FK  warehouse_id    ─────> warehouses.id           │
+│     code                   VARCHAR                 │ -- e.g. RACK-A1
+│     description            VARCHAR                 │
+│     is_active              BOOLEAN                 │
+└────────────────────────────────────────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                          stock_movements                                      │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                                       │
+│ FK  product_id           ─────> products.id                                   │
+│ FK  warehouse_id         ─────> warehouses.id                                 │
+│ FK  location_id          ─────> warehouse_locations.id (optional)             │
+│     movement_type               VARCHAR   -- ('IN','OUT','ADJUST','TRANSFER') │
+│     quantity                    DECIMAL                                       │
+│     unit_cost                   DECIMAL                                       │
+│     movement_date               TIMESTAMP                                     │
+│     reference_type              VARCHAR   -- ('SO','PO','GRN','INV','ADJ',..) │
+│     reference_id                INTEGER                                       │
+│     reference_number            VARCHAR                                       │
+│     notes                       TEXT                                          │
+│ FK  created_by           ─────> users.id                                      │
+│     created_at                  TIMESTAMP                                     │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       SALES ORDER MODULE                                                │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                              sales_orders                                     │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                                       │
+│ UQ  order_number                VARCHAR                                       │
+│ FK  customer_id          ─────> customers.id                                  │
+│     order_date                  DATE                                          │
+│     required_date               DATE                                          │
+│     shipped_date                DATE                                          │
+│     status                      VARCHAR  -- ('DRAFT','CONFIRMED','SHIPPED',   │
+│                                              'INVOICED','CANCELLED')          │
+│ FK  shipping_address_id  ─────> addresses.id                                  │
+│ FK  billing_address_id   ─────> addresses.id                                  │
+│     subtotal                    DECIMAL                                       │
+│     discount_amount             DECIMAL                                       │
+│     tax_amount                  DECIMAL                                       │
+│     shipping_amount             DECIMAL                                       │
+│     total_amount                DECIMAL                                       │
+│ FK  currency_code        ─────> currencies.currency_code                      │
+│     exchange_rate               DECIMAL                                       │
+│     payment_terms               VARCHAR                                       │
+│     notes                       TEXT                                          │
+│ FK  created_by           ─────> users.id                                      │
+│     created_at                  TIMESTAMP                                     │
+│     updated_at                  TIMESTAMP                                     │
+└───────────────────────────────────────────────────────────────────────────────┘
+                    │
+                    │ (sales_order has many items)
+                    │
+                    ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                          sales_order_items                                    │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                                       │
+│ FK  sales_order_id       ─────> sales_orders.id                               │
+│     line_no                     INTEGER                                       │
+│ FK  product_id           ─────> products.id                                   │
+│     description                 TEXT                                          │
+│     quantity                    DECIMAL                                       │
+│     unit_price                  DECIMAL                                       │
+│     discount_percent            DECIMAL                                       │
+│     discount_amount             DECIMAL                                       │
+│ FK  tax_rate_id          ─────> tax_rates.id                                  │
+│     tax_amount                  DECIMAL                                       │
+│     line_total                  DECIMAL                                       │
+│     shipped_quantity            DECIMAL                                       │
+│     invoiced_quantity           DECIMAL                                       │
+│     notes                       TEXT                                          │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                       INVOICING MODULE                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                              invoices                                         │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                                       │
+│ UQ  invoice_number              VARCHAR                                       │
+│ FK  sales_order_id       ─────> sales_orders.id  (NULLABLE)                   │
+│ FK  customer_id          ─────> customers.id                                  │
+│     invoice_date                DATE                                          │
+│     due_date                    DATE                                          │
+│     status                      VARCHAR  -- ('DRAFT','SENT','PARTIAL',        │
+│                                              'PAID','OVERDUE','CANCELLED')    │
+│ FK  billing_address_id   ─────> addresses.id                                  │
+│     subtotal                    DECIMAL                                       │
+│     discount_amount             DECIMAL                                       │
+│     tax_amount                  DECIMAL                                       │
+│     total_amount                DECIMAL                                       │
+│     paid_amount                 DECIMAL                                       │
+│     balance_due                 DECIMAL                                       │
+│ FK  currency_code        ─────> currencies.currency_code                      │
+│     exchange_rate               DECIMAL                                       │
+│     payment_terms               VARCHAR                                       │
+│     notes                       TEXT                                          │
+│ FK  created_by           ─────> users.id                                      │
+│     created_at                  TIMESTAMP                                     │
+│     updated_at                  TIMESTAMP                                     │
+└───────────────────────────────────────────────────────────────────────────────┘
+                    │
+                    │ (invoice has many items, payments, credit_notes)
+                    │
+     ┌───────────────┬───────────────────────────┬───────────────────────────┐
+     ▼               ▼                           ▼                           ▼
+┌──────────────┐ ┌────────────────┐      ┌────────────────┐           ┌────────────────┐
+│invoice_items │ │   payments     │      │  credit_notes  │           │  journal_links │
+└──────────────┘ └────────────────┘      └────────────────┘           └────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                          invoice_items                                        │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                                       │
+│ FK  invoice_id           ─────> invoices.id                                   │
+│     line_no                     INTEGER                                       │
+│ FK  product_id           ─────> products.id                                   │
+│ FK  sales_order_item_id  ─────> sales_order_items.id  (NULLABLE)              │
+│     description                 TEXT                                          │
+│     quantity                    DECIMAL                                       │
+│     unit_price                  DECIMAL                                       │
+│     discount_percent            DECIMAL                                       │
+│     discount_amount             DECIMAL                                       │
+│ FK  tax_rate_id          ─────> tax_rates.id                                  │
+│     tax_amount                  DECIMAL                                       │
+│     line_total                  DECIMAL                                       │
+│     notes                       TEXT                                          │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                              payments                                         │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                                       │
+│     payment_number              VARCHAR                                       │
+│ FK  invoice_id           ─────> invoices.id                                   │
+│ FK  customer_id          ─────> customers.id                                  │
+│     payment_date                DATE                                          │
+│     amount                      DECIMAL                                       │
+│     payment_method              VARCHAR  -- ('CASH','CHEQUE','CARD',          │
+│                                              'BANK_TRANSFER','OTHER')         │
+│     reference_number            VARCHAR                                       │
+│     bank_account                VARCHAR                                       │
+│     cheque_number               VARCHAR                                       │
+│     cheque_date                 DATE                                          │
+│ FK  currency_code        ─────> currencies.currency_code                      │
+│     exchange_rate               DECIMAL                                       │
+│     notes                       TEXT                                          │
+│ FK  created_by           ─────> users.id                                      │
+│     created_at                  TIMESTAMP                                     │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   PURCHASE ORDER MODULE                                                 │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                          purchase_orders                                      │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                                       │
+│ UQ  po_number                   VARCHAR                                       │
+│ FK  supplier_id          ─────> suppliers.id                                  │
+│     order_date                  DATE                                          │
+│     expected_delivery_date      DATE                                          │
+│     actual_delivery_date        DATE                                          │
+│     status                      VARCHAR  -- ('DRAFT','SENT','CONFIRMED',      │
+│                                              'PARTIAL_RECEIVED','RECEIVED',   │
+│                                              'CLOSED','CANCELLED')            │
+│ FK  delivery_address_id  ─────> addresses.id                                  │
+│     subtotal                    DECIMAL                                       │
+│     discount_amount             DECIMAL                                       │
+│     tax_amount                  DECIMAL                                       │
+│     shipping_amount             DECIMAL                                       │
+│     total_amount                DECIMAL                                       │
+│ FK  currency_code        ─────> currencies.currency_code                      │
+│     exchange_rate               DECIMAL                                       │
+│     payment_terms               VARCHAR                                       │
+│     notes                       TEXT                                          │
+│ FK  created_by           ─────> users.id                                      │
+│ FK  approved_by          ─────> users.id (nullable)                           │
+│     approved_at                 TIMESTAMP                                     │
+│     created_at                  TIMESTAMP                                     │
+│     updated_at                  TIMESTAMP                                     │
+└───────────────────────────────────────────────────────────────────────────────┘
+                    │
+                    │ (purchase_order has many items)
+                    │
+                    ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                          purchase_order_items                                 │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                                       │
+│ FK  purchase_order_id    ─────> purchase_orders.id                            │
+│     line_no                     INTEGER                                       │
+│ FK  product_id           ─────> products.id                                   │
+│     description                 TEXT                                          │
+│     quantity                    DECIMAL                                       │
+│     unit_price                  DECIMAL                                       │
+│     discount_percent            DECIMAL                                       │
+│     discount_amount             DECIMAL                                       │
+│ FK  tax_rate_id          ─────> tax_rates.id                                  │
+│     tax_amount                  DECIMAL                                       │
+│     line_total                  DECIMAL                                       │
+│     received_quantity           DECIMAL                                       │
+│     expected_delivery_date      DATE                                          │
+│     notes                       TEXT                                          │
+└───────────────────────────────────────────────────────────────────────────────┘
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   GOODS RECEIPT MODULE                                                  │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                          goods_receipts                                       │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                                       │
+│ UQ  grn_number                  VARCHAR                                       │
+│ FK  purchase_order_id    ─────> purchase_orders.id                            │
+│ FK  supplier_id          ─────> suppliers.id                                  │
+│ FK  warehouse_id         ─────> warehouses.id                                 │
+│     receipt_date                DATE                                          │
+│     status                      VARCHAR  -- ('DRAFT','RECEIVED','INSPECTED',  │
+│                                              'APPROVED','POSTED')             │
+│     supplier_invoice_no         VARCHAR                                       │
+│     supplier_invoice_date       DATE                                          │
+│     delivery_note_no            VARCHAR                                       │
+│     vehicle_number              VARCHAR                                       │
+│     received_by                 VARCHAR                                       │
+│     inspection_status           VARCHAR                                       │
+│     notes                       TEXT                                          │
+│ FK  created_by           ─────> users.id                                      │
+│ FK  approved_by          ─────> users.id (nullable)                           │
+│     approved_at                 TIMESTAMP                                     │
+│     created_at                  TIMESTAMP                                     │
+│     updated_at                  TIMESTAMP                                     │
+└───────────────────────────────────────────────────────────────────────────────┘
+                    │
+                    │ (goods_receipt has many items → also drives stock_movements IN)
+                    │
+                    ▼
+┌───────────────────────────────────────────────────────────────────────────────┐
+│                          goods_receipt_items                                  │
+├───────────────────────────────────────────────────────────────────────────────┤
+│ PK  id                          INTEGER                                       │
+│ FK  goods_receipt_id     ─────> goods_receipts.id                             │
+│     line_no                     INTEGER                                       │
+│ FK  product_id           ─────> products.id                                   │
+│ FK  purchase_order_item_id ──> purchase_order_items.id                        │
+│     ordered_quantity            DECIMAL                                       │
+│     received_quantity           DECIMAL                                       │
+│     accepted_quantity           DECIMAL                                       │
+│     rejected_quantity           DECIMAL                                       │
+│     unit_cost                   DECIMAL                                       │
+│     batch_number                VARCHAR                                       │
+│     serial_number               VARCHAR                                       │
+│     expiry_date                 DATE                                          │
+│     quality_status              VARCHAR  -- ('PASSED','FAILED','PENDING')     │
+│     notes                       TEXT                                          │
+└───────────────────────────────────────────────────────────────────────────────┘
+         ▲              ▲              ▲
+         │              │              │
+         │              │              ├───────────> purchase_order_items.id
+         │              └──────────────────────────> products.id
+         └─────────────────────────────────────────> goods_receipts.id
+
+(Each accepted item typically generates an 'IN' row in stock_movements)
+
+
+┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│                                   ACCOUNTING / GENERAL LEDGER                                           │
+└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────┐
+│               gl_accounts                  │
+├────────────────────────────────────────────┤
+│ PK  id                       INTEGER       │
+│     code                     VARCHAR       │ -- e.g. '1000-CASH'
+│     name                     VARCHAR       │
+│     account_type             VARCHAR       │ -- 'ASSET','LIABILITY','INCOME',...
+│     parent_id                INTEGER (FK→gl_accounts.id, optional)           │
+│     is_active                BOOLEAN       │
+└────────────────────────────────────────────┘
+
+
+┌────────────────────────────────────────────┐
+│             journal_entries                │
+├────────────────────────────────────────────┤
+│ PK  id                       INTEGER       │
+│     journal_number           VARCHAR (UQ)  │
+│     entry_date               DATE          │
+│     description              VARCHAR       │
+│     source_module            VARCHAR       │ -- 'AR','AP','INV','GL', etc.
+│     source_reference_type    VARCHAR       │ -- 'INVOICE','PAYMENT','GRN',...
+│     source_reference_id      INTEGER       │
+│     posted                   BOOLEAN       │
+│ FK  created_by        ─────> users.id      │
+│     created_at               TIMESTAMP     │
+└────────────────────────────────────────────┘
+                    │
+                    │ (one journal_entry has many journal_lines)
+                    ▼
+┌────────────────────────────────────────────┐
+│              journal_lines                 │
+├────────────────────────────────────────────┤
+│ PK  id                       INTEGER       │
+│ FK  journal_entry_id  ─────> journal_entries.id │
+│     line_no                  INTEGER       │
+│ FK  gl_account_id     ─────> gl_accounts.id│
+│     debit                    DECIMAL       │
+│     credit                   DECIMAL       │
+│     description              VARCHAR       │
+└────────────────────────────────────────────┘
+
+
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                                      END OF MEGA ERP ASCII ERD
+════════════════════════════════════════════════════════════════════════════════════════════════════════════
+```
+---
 ---
 
 # Complete SQL Reference for Data Analysts
@@ -2485,593 +3075,4 @@ FROM → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → 
 6. Use appropriate data types
 7. Regularly update statistics
 8. Monitor slow query logs
-
-```text
-════════════════════════════════════════════════════════════════════════════════════════════════════════════
-                                    MEGA ERP - COMPREHENSIVE ENTITY RELATIONSHIP DIAGRAM
-════════════════════════════════════════════════════════════════════════════════════════════════════════════
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                         CORE SYSTEM TABLES                                              │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────┐
-│              users               │
-├──────────────────────────────────┤
-│ PK  id                 INTEGER   │
-│     username           VARCHAR   │
-│     email              VARCHAR   │
-│     password_hash      VARCHAR   │
-│     role               VARCHAR   │   -- e.g. 'admin','sales','accounts'
-│     is_active          BOOLEAN   │
-│     created_at         TIMESTAMP │
-│     updated_at         TIMESTAMP │
-└──────────────────────────────────┘
-         │
-         │ (created_by / approved_by relationships to multiple tables)
-         │
-         ├─────────────────────────────────────────────────────────────────────────────────────────────┐
-         │                                                                                             │
-         ▼                                                                                             ▼
-  (sales_orders, invoices, payments, purchase_orders, goods_receipts, stock_movements, journal_entries, ...)
-         
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                      REFERENCE & MASTER DATA                                            │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────┐       ┌──────────────────────────────────┐       ┌───────────────────┐
-│           countries              │       │           currencies             │       │     tax_rates     │
-├──────────────────────────────────┤       ├──────────────────────────────────┤       ├───────────────────┤
-│ PK  country_code      CHAR(2)    │       │ PK  currency_code    CHAR(3)     │       │ PK  id    INTEGER │
-│     name              VARCHAR    │       │     name             VARCHAR     │       │     name  VARCHAR │
-│     iso_numeric       CHAR(3)    │       │     symbol           VARCHAR     │       │     rate  DEC(5,2)│
-│     phone_code        VARCHAR    │       │     decimal_places   INTEGER     │       │ FK  country_code  │
-│     is_active         BOOLEAN    │       │     is_active        BOOLEAN     │       │     effective_from│
-└──────────────────────────────────┘       └──────────────────────────────────┘       │     effective_to  │
-         ▲                                          ▲                                 │     is_active     │
-         │                                          │                                 └───────────────────┘
-         │                                          │                                          ▲
-         │                                          │                                          │
-         │                                          │                                          │
-         │                                          │                                    (used by products,
-         │                                          │                                     sales_order_items,
-         │                                          │                                     invoice_items,
-         │                                          │                                     purchase_order_items)
-
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                         ADDRESS MANAGEMENT                                              │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────┐
-│                  addresses                       │
-├──────────────────────────────────────────────────┤
-│ PK  id                    INTEGER                │
-│     address_line1         VARCHAR                │
-│     address_line2         VARCHAR                │
-│     city                  VARCHAR                │
-│     state                 VARCHAR                │
-│     postal_code           VARCHAR                │
-│ FK  country_code  ──────> countries.country_code │
-│     latitude              DECIMAL                │
-│     longitude             DECIMAL                │
-│     is_active             BOOLEAN                │
-│     created_at            TIMESTAMP              │
-└──────────────────────────────────────────────────┘
-                    │
-                    │ (referenced by multiple entities)
-                    │
-     ┌───────────────────────────────┬───────────────────────────────┬───────────────────────────────┐
-     ▼                               ▼                               ▼                               ▼
-(customers.billing_address)  (customers.shipping_address)   (suppliers.address)             (warehouses.address)
-
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                     CUSTOMER MANAGEMENT MODULE                                          │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────┐
-│                              customers                                │
-├───────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                               │
-│ UQ  customer_code               VARCHAR                               │
-│     name                        VARCHAR                               │
-│     email                       VARCHAR                               │
-│     phone                       VARCHAR                               │
-│     mobile                      VARCHAR                               │
-│     tax_id                      VARCHAR                               │
-│ FK  billing_address_id   ─────> addresses.id                          │
-│ FK  shipping_address_id  ─────> addresses.id                          │
-│ FK  currency_code        ─────> currencies.currency_code              │
-│     credit_limit                DECIMAL                               │
-│     payment_terms_days          INTEGER                               │
-│     is_active                   BOOLEAN                               │
-│     created_at                  TIMESTAMP                             │
-│     updated_at                  TIMESTAMP                             │
-└───────────────────────────────────────────────────────────────────────┘
-                    │
-                    │ (customer has many related records)
-                    │
-          ┌──────────┴──────────────┬───────────────┬─────────────────────────┐
-          ▼                         ▼               ▼                         ▼
-┌───────────────────┐     ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐
-│   sales_orders    │     │     invoices      │  │     payments      │  │ customer_contacts │
-└───────────────────┘     └───────────────────┘  └───────────────────┘  └───────────────────┘
-
-
-┌────────────────────────────────────────────────────┐
-│             customer_contacts                      │
-├────────────────────────────────────────────────────┤
-│ PK  id                     INTEGER                 │
-│ FK  customer_id     ─────> customers.id            │
-│     name                   VARCHAR                 │
-│     email                  VARCHAR                 │
-│     phone                  VARCHAR                 │
-│     position               VARCHAR                 │
-│     is_primary             BOOLEAN                 │
-│     notes                  TEXT                    │
-└────────────────────────────────────────────────────┘
-
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                     SUPPLIER MANAGEMENT MODULE                                          │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────┐
-│                              suppliers                                │
-├───────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                               │
-│ UQ  supplier_code               VARCHAR                               │
-│     name                        VARCHAR                               │
-│     email                       VARCHAR                               │
-│     phone                       VARCHAR                               │
-│     mobile                      VARCHAR                               │
-│     tax_id                      VARCHAR                               │
-│ FK  address_id           ─────> addresses.id                          │
-│ FK  currency_code        ─────> currencies.currency_code              │
-│     payment_terms_days          INTEGER                               │
-│     is_active                   BOOLEAN                               │
-│     created_at                  TIMESTAMP                             │
-│     updated_at                  TIMESTAMP                             │
-└───────────────────────────────────────────────────────────────────────┘
-                    │
-                    │ (supplier has many purchase_orders, supplier_invoices, supplier_payments)
-                    │
-          ┌──────────┴──────────────┬─────────────────────┬─────────────────────┐
-          ▼                         ▼                     ▼                     ▼
-┌───────────────────┐     ┌───────────────────┐  ┌───────────────────┐  ┌───────────────────┐
-│  purchase_orders  │     │ supplier_invoices │  │ supplier_payments │  │  supplier_contacts│
-└───────────────────┘     └───────────────────┘  └───────────────────┘  └───────────────────┘
-
-(You can model supplier_invoices & supplier_payments similar to customer invoices/payments if needed)
-
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                    PRODUCT CATALOG MODULE                                               │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────┐
-│          product_categories                      │
-├──────────────────────────────────────────────────┤
-│ PK  id                    INTEGER                │
-│     name                  VARCHAR                │
-│     description           TEXT                   │
-│ FK  parent_id      ─────> product_categories.id  │  ◄── SELF REFERENCE (category tree)
-│     level                 INTEGER                │
-│     path                  VARCHAR                │
-│     is_active             BOOLEAN                │
-│     created_at            TIMESTAMP              │
-└──────────────────────────────────────────────────┘
-                    │
-                    │ (category has many products)
-                    │
-                    ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                                products                                      │
-├───────────────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                                       │
-│ UQ  sku                         VARCHAR                                       │
-│     name                        VARCHAR                                       │
-│     description                 TEXT                                          │
-│     unit_of_measure             VARCHAR                                       │
-│     sales_price                 DECIMAL                                       │
-│     purchase_price              DECIMAL                                       │
-│     standard_cost               DECIMAL                                       │
-│ FK  category_id          ─────> product_categories.id                         │
-│ FK  tax_rate_id          ─────> tax_rates.id                                  │
-│     reorder_level               INTEGER                                       │
-│     reorder_quantity            INTEGER                                       │
-│     min_stock_level             INTEGER                                       │
-│     max_stock_level             INTEGER                                       │
-│     is_active                   BOOLEAN                                       │
-│     is_sellable                 BOOLEAN                                       │
-│     is_purchasable              BOOLEAN                                       │
-│     created_at                  TIMESTAMP                                     │
-│     updated_at                  TIMESTAMP                                     │
-└───────────────────────────────────────────────────────────────────────────────┘
-                    │
-                    │ (product used across modules)
-                    │
-      ┌──────────────┬──────────────┬──────────────┬──────────────┬──────────────┬──────────────┐
-      ▼              ▼              ▼              ▼              ▼              ▼
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│ sales_order │ │ invoice_    │ │ purchase_   │ │ goods_      │ │ stock_      │ │ bom_        │
-│ items       │ │ items       │ │ order_items │ │ receipt_items│ │ movements   │ │ components  │
-└─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘
-
-
-┌────────────────────────────────────────────┐
-│             bom_components                 │
-├────────────────────────────────────────────┤
-│ PK  id                       INTEGER       │
-│ FK  parent_product_id ────> products.id    │ -- finished good
-│ FK  component_product_id -> products.id    │ -- raw/child item
-│     quantity_per_parent      DECIMAL       │
-│     scrap_factor             DECIMAL       │
-│     is_active                BOOLEAN       │
-└────────────────────────────────────────────┘
-
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                  WAREHOUSE & INVENTORY MODULE                                           │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────┐
-│                warehouses                        │
-├──────────────────────────────────────────────────┤
-│ PK  id                    INTEGER                │
-│ UQ  code                  VARCHAR                │
-│     name                  VARCHAR                │
-│ FK  address_id     ─────> addresses.id           │
-│     manager_name          VARCHAR                │
-│     capacity              DECIMAL                │
-│     is_active             BOOLEAN                │
-│     created_at            TIMESTAMP              │
-└──────────────────────────────────────────────────┘
-                    │
-                    │ (warehouse has many stock_movements, goods_receipts, locations)
-                    │
-          ┌──────────┴──────────────┬─────────────────────┐
-          ▼                         ▼                     ▼
-┌───────────────────┐     ┌───────────────────┐   ┌───────────────────┐
-│  stock_movements  │     │  goods_receipts   │   │ warehouse_locations│
-└───────────────────┘     └───────────────────┘   └───────────────────┘
-
-┌────────────────────────────────────────────────────┐
-│           warehouse_locations                      │
-├────────────────────────────────────────────────────┤
-│ PK  id                     INTEGER                 │
-│ FK  warehouse_id    ─────> warehouses.id           │
-│     code                   VARCHAR                 │ -- e.g. RACK-A1
-│     description            VARCHAR                 │
-│     is_active              BOOLEAN                 │
-└────────────────────────────────────────────────────┘
-
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          stock_movements                                      │
-├───────────────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                                       │
-│ FK  product_id           ─────> products.id                                   │
-│ FK  warehouse_id         ─────> warehouses.id                                 │
-│ FK  location_id          ─────> warehouse_locations.id (optional)             │
-│     movement_type               VARCHAR   -- ('IN','OUT','ADJUST','TRANSFER') │
-│     quantity                    DECIMAL                                       │
-│     unit_cost                   DECIMAL                                       │
-│     movement_date               TIMESTAMP                                     │
-│     reference_type              VARCHAR   -- ('SO','PO','GRN','INV','ADJ',..) │
-│     reference_id                INTEGER                                       │
-│     reference_number            VARCHAR                                       │
-│     notes                       TEXT                                          │
-│ FK  created_by           ─────> users.id                                      │
-│     created_at                  TIMESTAMP                                     │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                       SALES ORDER MODULE                                                │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                              sales_orders                                     │
-├───────────────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                                       │
-│ UQ  order_number                VARCHAR                                       │
-│ FK  customer_id          ─────> customers.id                                  │
-│     order_date                  DATE                                          │
-│     required_date               DATE                                          │
-│     shipped_date                DATE                                          │
-│     status                      VARCHAR  -- ('DRAFT','CONFIRMED','SHIPPED',   │
-│                                              'INVOICED','CANCELLED')          │
-│ FK  shipping_address_id  ─────> addresses.id                                  │
-│ FK  billing_address_id   ─────> addresses.id                                  │
-│     subtotal                    DECIMAL                                       │
-│     discount_amount             DECIMAL                                       │
-│     tax_amount                  DECIMAL                                       │
-│     shipping_amount             DECIMAL                                       │
-│     total_amount                DECIMAL                                       │
-│ FK  currency_code        ─────> currencies.currency_code                      │
-│     exchange_rate               DECIMAL                                       │
-│     payment_terms               VARCHAR                                       │
-│     notes                       TEXT                                          │
-│ FK  created_by           ─────> users.id                                      │
-│     created_at                  TIMESTAMP                                     │
-│     updated_at                  TIMESTAMP                                     │
-└───────────────────────────────────────────────────────────────────────────────┘
-                    │
-                    │ (sales_order has many items)
-                    │
-                    ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          sales_order_items                                    │
-├───────────────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                                       │
-│ FK  sales_order_id       ─────> sales_orders.id                               │
-│     line_no                     INTEGER                                       │
-│ FK  product_id           ─────> products.id                                   │
-│     description                 TEXT                                          │
-│     quantity                    DECIMAL                                       │
-│     unit_price                  DECIMAL                                       │
-│     discount_percent            DECIMAL                                       │
-│     discount_amount             DECIMAL                                       │
-│ FK  tax_rate_id          ─────> tax_rates.id                                  │
-│     tax_amount                  DECIMAL                                       │
-│     line_total                  DECIMAL                                       │
-│     shipped_quantity            DECIMAL                                       │
-│     invoiced_quantity           DECIMAL                                       │
-│     notes                       TEXT                                          │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                       INVOICING MODULE                                                  │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                              invoices                                         │
-├───────────────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                                       │
-│ UQ  invoice_number              VARCHAR                                       │
-│ FK  sales_order_id       ─────> sales_orders.id  (NULLABLE)                   │
-│ FK  customer_id          ─────> customers.id                                  │
-│     invoice_date                DATE                                          │
-│     due_date                    DATE                                          │
-│     status                      VARCHAR  -- ('DRAFT','SENT','PARTIAL',        │
-│                                              'PAID','OVERDUE','CANCELLED')    │
-│ FK  billing_address_id   ─────> addresses.id                                  │
-│     subtotal                    DECIMAL                                       │
-│     discount_amount             DECIMAL                                       │
-│     tax_amount                  DECIMAL                                       │
-│     total_amount                DECIMAL                                       │
-│     paid_amount                 DECIMAL                                       │
-│     balance_due                 DECIMAL                                       │
-│ FK  currency_code        ─────> currencies.currency_code                      │
-│     exchange_rate               DECIMAL                                       │
-│     payment_terms               VARCHAR                                       │
-│     notes                       TEXT                                          │
-│ FK  created_by           ─────> users.id                                      │
-│     created_at                  TIMESTAMP                                     │
-│     updated_at                  TIMESTAMP                                     │
-└───────────────────────────────────────────────────────────────────────────────┘
-                    │
-                    │ (invoice has many items, payments, credit_notes)
-                    │
-     ┌───────────────┬───────────────────────────┬───────────────────────────┐
-     ▼               ▼                           ▼                           ▼
-┌──────────────┐ ┌────────────────┐      ┌────────────────┐           ┌────────────────┐
-│invoice_items │ │   payments     │      │  credit_notes  │           │  journal_links │
-└──────────────┘ └────────────────┘      └────────────────┘           └────────────────┘
-
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          invoice_items                                        │
-├───────────────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                                       │
-│ FK  invoice_id           ─────> invoices.id                                   │
-│     line_no                     INTEGER                                       │
-│ FK  product_id           ─────> products.id                                   │
-│ FK  sales_order_item_id  ─────> sales_order_items.id  (NULLABLE)              │
-│     description                 TEXT                                          │
-│     quantity                    DECIMAL                                       │
-│     unit_price                  DECIMAL                                       │
-│     discount_percent            DECIMAL                                       │
-│     discount_amount             DECIMAL                                       │
-│ FK  tax_rate_id          ─────> tax_rates.id                                  │
-│     tax_amount                  DECIMAL                                       │
-│     line_total                  DECIMAL                                       │
-│     notes                       TEXT                                          │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                              payments                                         │
-├───────────────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                                       │
-│     payment_number              VARCHAR                                       │
-│ FK  invoice_id           ─────> invoices.id                                   │
-│ FK  customer_id          ─────> customers.id                                  │
-│     payment_date                DATE                                          │
-│     amount                      DECIMAL                                       │
-│     payment_method              VARCHAR  -- ('CASH','CHEQUE','CARD',          │
-│                                              'BANK_TRANSFER','OTHER')         │
-│     reference_number            VARCHAR                                       │
-│     bank_account                VARCHAR                                       │
-│     cheque_number               VARCHAR                                       │
-│     cheque_date                 DATE                                          │
-│ FK  currency_code        ─────> currencies.currency_code                      │
-│     exchange_rate               DECIMAL                                       │
-│     notes                       TEXT                                          │
-│ FK  created_by           ─────> users.id                                      │
-│     created_at                  TIMESTAMP                                     │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   PURCHASE ORDER MODULE                                                 │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          purchase_orders                                      │
-├───────────────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                                       │
-│ UQ  po_number                   VARCHAR                                       │
-│ FK  supplier_id          ─────> suppliers.id                                  │
-│     order_date                  DATE                                          │
-│     expected_delivery_date      DATE                                          │
-│     actual_delivery_date        DATE                                          │
-│     status                      VARCHAR  -- ('DRAFT','SENT','CONFIRMED',      │
-│                                              'PARTIAL_RECEIVED','RECEIVED',   │
-│                                              'CLOSED','CANCELLED')            │
-│ FK  delivery_address_id  ─────> addresses.id                                  │
-│     subtotal                    DECIMAL                                       │
-│     discount_amount             DECIMAL                                       │
-│     tax_amount                  DECIMAL                                       │
-│     shipping_amount             DECIMAL                                       │
-│     total_amount                DECIMAL                                       │
-│ FK  currency_code        ─────> currencies.currency_code                      │
-│     exchange_rate               DECIMAL                                       │
-│     payment_terms               VARCHAR                                       │
-│     notes                       TEXT                                          │
-│ FK  created_by           ─────> users.id                                      │
-│ FK  approved_by          ─────> users.id (nullable)                           │
-│     approved_at                 TIMESTAMP                                     │
-│     created_at                  TIMESTAMP                                     │
-│     updated_at                  TIMESTAMP                                     │
-└───────────────────────────────────────────────────────────────────────────────┘
-                    │
-                    │ (purchase_order has many items)
-                    │
-                    ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          purchase_order_items                                 │
-├───────────────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                                       │
-│ FK  purchase_order_id    ─────> purchase_orders.id                            │
-│     line_no                     INTEGER                                       │
-│ FK  product_id           ─────> products.id                                   │
-│     description                 TEXT                                          │
-│     quantity                    DECIMAL                                       │
-│     unit_price                  DECIMAL                                       │
-│     discount_percent            DECIMAL                                       │
-│     discount_amount             DECIMAL                                       │
-│ FK  tax_rate_id          ─────> tax_rates.id                                  │
-│     tax_amount                  DECIMAL                                       │
-│     line_total                  DECIMAL                                       │
-│     received_quantity           DECIMAL                                       │
-│     expected_delivery_date      DATE                                          │
-│     notes                       TEXT                                          │
-└───────────────────────────────────────────────────────────────────────────────┘
-
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   GOODS RECEIPT MODULE                                                  │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          goods_receipts                                       │
-├───────────────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                                       │
-│ UQ  grn_number                  VARCHAR                                       │
-│ FK  purchase_order_id    ─────> purchase_orders.id                            │
-│ FK  supplier_id          ─────> suppliers.id                                  │
-│ FK  warehouse_id         ─────> warehouses.id                                 │
-│     receipt_date                DATE                                          │
-│     status                      VARCHAR  -- ('DRAFT','RECEIVED','INSPECTED',  │
-│                                              'APPROVED','POSTED')             │
-│     supplier_invoice_no         VARCHAR                                       │
-│     supplier_invoice_date       DATE                                          │
-│     delivery_note_no            VARCHAR                                       │
-│     vehicle_number              VARCHAR                                       │
-│     received_by                 VARCHAR                                       │
-│     inspection_status           VARCHAR                                       │
-│     notes                       TEXT                                          │
-│ FK  created_by           ─────> users.id                                      │
-│ FK  approved_by          ─────> users.id (nullable)                           │
-│     approved_at                 TIMESTAMP                                     │
-│     created_at                  TIMESTAMP                                     │
-│     updated_at                  TIMESTAMP                                     │
-└───────────────────────────────────────────────────────────────────────────────┘
-                    │
-                    │ (goods_receipt has many items → also drives stock_movements IN)
-                    │
-                    ▼
-┌───────────────────────────────────────────────────────────────────────────────┐
-│                          goods_receipt_items                                  │
-├───────────────────────────────────────────────────────────────────────────────┤
-│ PK  id                          INTEGER                                       │
-│ FK  goods_receipt_id     ─────> goods_receipts.id                             │
-│     line_no                     INTEGER                                       │
-│ FK  product_id           ─────> products.id                                   │
-│ FK  purchase_order_item_id ──> purchase_order_items.id                        │
-│     ordered_quantity            DECIMAL                                       │
-│     received_quantity           DECIMAL                                       │
-│     accepted_quantity           DECIMAL                                       │
-│     rejected_quantity           DECIMAL                                       │
-│     unit_cost                   DECIMAL                                       │
-│     batch_number                VARCHAR                                       │
-│     serial_number               VARCHAR                                       │
-│     expiry_date                 DATE                                          │
-│     quality_status              VARCHAR  -- ('PASSED','FAILED','PENDING')     │
-│     notes                       TEXT                                          │
-└───────────────────────────────────────────────────────────────────────────────┘
-         ▲              ▲              ▲
-         │              │              │
-         │              │              ├───────────> purchase_order_items.id
-         │              └──────────────────────────> products.id
-         └─────────────────────────────────────────> goods_receipts.id
-
-(Each accepted item typically generates an 'IN' row in stock_movements)
-
-
-┌─────────────────────────────────────────────────────────────────────────────────────────────────────────┐
-│                                   ACCOUNTING / GENERAL LEDGER                                           │
-└─────────────────────────────────────────────────────────────────────────────────────────────────────────┘
-
-┌────────────────────────────────────────────┐
-│               gl_accounts                  │
-├────────────────────────────────────────────┤
-│ PK  id                       INTEGER       │
-│     code                     VARCHAR       │ -- e.g. '1000-CASH'
-│     name                     VARCHAR       │
-│     account_type             VARCHAR       │ -- 'ASSET','LIABILITY','INCOME',...
-│     parent_id                INTEGER (FK→gl_accounts.id, optional)           │
-│     is_active                BOOLEAN       │
-└────────────────────────────────────────────┘
-
-
-┌────────────────────────────────────────────┐
-│             journal_entries                │
-├────────────────────────────────────────────┤
-│ PK  id                       INTEGER       │
-│     journal_number           VARCHAR (UQ)  │
-│     entry_date               DATE          │
-│     description              VARCHAR       │
-│     source_module            VARCHAR       │ -- 'AR','AP','INV','GL', etc.
-│     source_reference_type    VARCHAR       │ -- 'INVOICE','PAYMENT','GRN',...
-│     source_reference_id      INTEGER       │
-│     posted                   BOOLEAN       │
-│ FK  created_by        ─────> users.id      │
-│     created_at               TIMESTAMP     │
-└────────────────────────────────────────────┘
-                    │
-                    │ (one journal_entry has many journal_lines)
-                    ▼
-┌────────────────────────────────────────────┐
-│              journal_lines                 │
-├────────────────────────────────────────────┤
-│ PK  id                       INTEGER       │
-│ FK  journal_entry_id  ─────> journal_entries.id │
-│     line_no                  INTEGER       │
-│ FK  gl_account_id     ─────> gl_accounts.id│
-│     debit                    DECIMAL       │
-│     credit                   DECIMAL       │
-│     description              VARCHAR       │
-└────────────────────────────────────────────┘
-
-
-════════════════════════════════════════════════════════════════════════════════════════════════════════════
-                                      END OF MEGA ERP ASCII ERD
-════════════════════════════════════════════════════════════════════════════════════════════════════════════
-```
 
