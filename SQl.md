@@ -1501,1578 +1501,3050 @@ DATABASE RELATIONSHIPS (SQL) – QUICK REFERENCE
 ════════════════════════════════════════════════════════════════════════════════════════════════════════════
 ```
 ---
+
+# 🖥️ **SQL DATATYPES — TERMINAL CHEATSHEET**
+
+============================================================
+
+```
+============================================================
+SQL DATATYPE REFERENCE (ERP EDITION)
+============================================================
+
+------------------------------------------------------------
+1. NUMERIC DATATYPES
+------------------------------------------------------------
+
+TINYINT(1)         
+    Range: -128 to 127
+    Use: Boolean flags, status, is_active, yes/no fields
+
+SMALLINT            
+    Range: -32k to 32k
+    Use: small counters, small status codes
+
+INT                  
+    Range: -2B to 2B
+    Use: Primary keys, foreign keys, customer_id, order_id
+
+BIGINT               
+    Very large numbers
+    Use: Large-scale ERP systems, logs, event IDs
+
+DECIMAL(p,s)         *** MOST IMPORTANT FOR ERP ***
+    Exact precision decimal numbers
+    Use: price, amount, tax, totals, cost, salary
+    Example: DECIMAL(10,2) → 99999999.99
+
+FLOAT / DOUBLE       
+    Approximate decimal numbers
+    Use: scientific values, percentages
+    NOT for money
+
+------------------------------------------------------------
+2. STRING & TEXT DATATYPES
+------------------------------------------------------------
+
+CHAR(n)
+    Fixed-length string
+    Use: ISO codes, country code, currency code
+    Example: CHAR(2) → 'IN', 'US'
+
+VARCHAR(n)
+    Variable-length string (most used)
+    Use: names, emails, phone, address, SKU, city
+    Example: VARCHAR(150)
+
+TEXT
+    Up to 65K characters
+    Use: descriptions, notes, long comments
+
+MEDIUMTEXT
+    Up to 16MB of text
+    Use: documents, long logs
+
+LONGTEXT
+    Up to 4GB
+    Use: very large content (rare)
+
+------------------------------------------------------------
+3. DATE & TIME DATATYPES
+------------------------------------------------------------
+
+DATE
+    Stores: YYYY-MM-DD
+    Use: order_date, invoice_date, birthdate
+
+TIME
+    Stores: HH:MM:SS
+    Use: shift timings, clock-in/out
+
+DATETIME
+    Date + time (no timezone)
+    Use: event logs, transaction timestamps
+
+TIMESTAMP
+    UTC-based datetime
+    Auto-fill and auto-update supported
+    Use: created_at, updated_at
+
+------------------------------------------------------------
+4. BOOLEAN DATATYPE
+------------------------------------------------------------
+
+BOOLEAN / TINYINT(1)
+    1 = TRUE
+    0 = FALSE
+    Use: is_active, is_paid, is_verified
+
+------------------------------------------------------------
+5. BINARY DATATYPES
+------------------------------------------------------------
+
+BLOB / MEDIUMBLOB / LONGBLOB
+    Binary data
+    Use: files, signatures, images, PDFs (not recommended inside DB)
+
+------------------------------------------------------------
+6. JSON & SPECIAL TYPES
+------------------------------------------------------------
+
+JSON
+    Structured JSON storage
+    Use: metadata, settings, custom_fields
+
+ENUM
+    Limited allowed values
+    Example: ENUM('NEW','CONFIRMED','SHIPPED')
+    Use: statuses in ERP
+
+SET
+    Multiple values from a list (rarely used)
+
+------------------------------------------------------------
+ERP-SPECIFIC DATATYPE RECOMMENDATIONS
+------------------------------------------------------------
+
+CUSTOMERS TABLE:
+    id              INT
+    name            VARCHAR(150)
+    email           VARCHAR(100)
+    phone           VARCHAR(20)
+    city            VARCHAR(100)
+    created_at      TIMESTAMP
+
+PRODUCTS TABLE:
+    id              INT
+    sku             VARCHAR(50)
+    name            VARCHAR(150)
+    price           DECIMAL(10,2)
+    stock_quantity  INT
+    is_active       TINYINT(1)
+    description     TEXT
+
+ORDERS TABLE:
+    id              INT
+    customer_id     INT
+    order_date      DATE
+    status          VARCHAR(20)
+    total_amount    DECIMAL(10,2)
+
+ORDER_ITEMS:
+    id              INT
+    order_id        INT
+    product_id      INT
+    quantity        INT
+    unit_price      DECIMAL(10,2)
+    line_total      DECIMAL(10,2)
+
+PAYMENTS:
+    id              INT
+    order_id        INT
+    amount          DECIMAL(10,2)
+    payment_date    DATE
+    method          VARCHAR(20)
+
+------------------------------------------------------------
+DATATYPE BEST PRACTICES (CRITICAL)
+------------------------------------------------------------
+
+✓ Use INT for primary keys
+✓ Use DECIMAL for money (never FLOAT/DOUBLE)
+✓ Use VARCHAR for names/emails/text
+✓ Use TEXT for large descriptions
+✓ Use TIMESTAMP for created_at / updated_at
+✓ Use TINYINT(1) for booleans
+✓ Use CHAR(2) and CHAR(3) for country/currency codes
+✓ Use JSON for flexible, schema-less data
+
+------------------------------------------------------------
+END OF DATATYPE CHEATSHEET
+============================================================
+```
+
 ---
 
-# Complete SQL Reference for Data Analysts
+---
 
-## Essential SQL Commands & Queries
+* **DDL** (Data Definition Language)
+* **DML** (Data Manipulation Language)
+* **DCL** (Data Control Language)
+* **TCL** (Transaction Control Language)
 
-### 1. SELECT - Data Retrieval
+
+# 🔶 1. DDL – **Data Definition Language**
+
+DDL commands define or change the **structure** of the database — meaning:
+**creating, modifying, or deleting tables, indexes, schemas, databases, etc.**
+
+DDL commands are auto-committed by default (in most SQL systems), meaning:
+
+> Once a DDL command executes, it is permanent and cannot be rolled back (in MySQL).
+
+### DDL Commands:
+
+* `CREATE`
+* `ALTER`
+* `DROP`
+* `TRUNCATE`
+
+---
+
+## 1.1 `CREATE`
+
+Used to **create**:
+
+* databases
+* tables
+* views
+* indexes
+* functions (in some DBs)
+* triggers
+
+### Example: Create database
+
 ```sql
--- Basic select
-SELECT * FROM table_name;
-SELECT column1, column2 FROM table_name;
-
--- Select with aliases
-SELECT column1 AS col1, column2 AS col2 FROM table_name;
-
--- Select distinct values
-SELECT DISTINCT column_name FROM table_name;
-
--- Select with calculations
-SELECT price, quantity, price * quantity AS total FROM orders;
+CREATE DATABASE shop_db;
 ```
 
-### 2. WHERE - Filtering Data
+### Example: Create table
+
 ```sql
--- Comparison operators
-SELECT * FROM products WHERE price > 100;
-SELECT * FROM products WHERE price = 100;
-SELECT * FROM products WHERE price != 100;
-SELECT * FROM products WHERE price >= 100;
-SELECT * FROM products WHERE price <= 100;
-
--- Logical operators
-SELECT * FROM products WHERE price > 100 AND category = 'Electronics';
-SELECT * FROM products WHERE price < 50 OR stock = 0;
-SELECT * FROM products WHERE NOT category = 'Books';
-
--- IN operator
-SELECT * FROM products WHERE category IN ('Books', 'Electronics', 'Clothing');
-
--- BETWEEN operator
-SELECT * FROM products WHERE price BETWEEN 50 AND 200;
-SELECT * FROM orders WHERE order_date BETWEEN '2024-01-01' AND '2024-12-31';
-
--- LIKE operator (pattern matching)
-SELECT * FROM customers WHERE name LIKE 'John%';  -- Starts with John
-SELECT * FROM customers WHERE email LIKE '%@gmail.com';  -- Ends with @gmail.com
-SELECT * FROM customers WHERE name LIKE '%son%';  -- Contains 'son'
-SELECT * FROM customers WHERE name LIKE '_ohn';  -- Single character wildcard
-
--- NULL checks
-SELECT * FROM customers WHERE phone IS NULL;
-SELECT * FROM customers WHERE phone IS NOT NULL;
+CREATE TABLE customers (
+    id INT PRIMARY KEY,
+    name VARCHAR(100),
+    email VARCHAR(100)
+);
 ```
 
-### 3. ORDER BY - Sorting Results
+### Example: Create index
+
 ```sql
--- Ascending order (default)
-SELECT * FROM products ORDER BY price;
-SELECT * FROM products ORDER BY price ASC;
-
--- Descending order
-SELECT * FROM products ORDER BY price DESC;
-
--- Multiple columns
-SELECT * FROM products ORDER BY category ASC, price DESC;
-
--- Order by column position
-SELECT name, price, stock FROM products ORDER BY 2 DESC;
+CREATE INDEX idx_customer_email
+ON customers(email);
 ```
 
-### 4. LIMIT & OFFSET - Result Pagination
+---
+
+## 1.2 `ALTER`
+
+Used to **modify an existing object**.
+
+You can:
+
+* add/remove columns
+* rename columns
+* change data types
+* add/remove constraints
+* rename tables
+
+### Example: Add a column
+
 ```sql
--- Limit results
-SELECT * FROM products LIMIT 10;
-
--- Skip and limit (pagination)
-SELECT * FROM products LIMIT 10 OFFSET 20;
-
--- MySQL/PostgreSQL alternative syntax
-SELECT * FROM products LIMIT 20, 10;  -- MySQL only
+ALTER TABLE customers
+ADD phone VARCHAR(20);
 ```
 
-### 5. Aggregate Functions
+### Example: Modify a column type
+
 ```sql
--- COUNT - Count rows
-SELECT COUNT(*) FROM customers;
-SELECT COUNT(customer_id) FROM customers;
-SELECT COUNT(DISTINCT city) FROM customers;
+ALTER TABLE customers
+MODIFY name VARCHAR(150);
+```
 
--- SUM - Total of values
-SELECT SUM(amount) FROM orders;
-SELECT SUM(price * quantity) FROM order_items;
+### Example: Drop a column
 
--- AVG - Average value
-SELECT AVG(price) FROM products;
-SELECT AVG(age) FROM customers;
+```sql
+ALTER TABLE customers
+DROP COLUMN phone;
+```
 
--- MIN/MAX - Minimum and maximum
-SELECT MIN(price) FROM products;
-SELECT MAX(order_date) FROM orders;
+---
 
--- Multiple aggregates
-SELECT 
-  COUNT(*) AS total_orders,
-  SUM(amount) AS total_revenue,
-  AVG(amount) AS avg_order_value,
-  MIN(amount) AS min_order,
-  MAX(amount) AS max_order
+## 1.3 `DROP`
+
+Used to **delete** database objects permanently.
+
+You can drop:
+
+* tables
+* databases
+* views
+* indexes
+* triggers
+
+⚠️ **DANGER:**
+`DROP` deletes the object **and all its data permanently**.
+
+### Example: Drop table
+
+```sql
+DROP TABLE customers;
+```
+
+### Example: Drop database
+
+```sql
+DROP DATABASE shop_db;
+```
+
+---
+
+## 1.4 `TRUNCATE`
+
+Deletes **all rows** in a table but keeps the structure.
+
+* Much faster than `DELETE`
+* Cannot be rolled back (in MySQL)
+* Resets auto-increment counter
+
+### Example:
+
+```sql
+TRUNCATE TABLE orders;
+```
+
+### Difference with DELETE:
+
+* `DELETE FROM orders` → row-by-row deletion, can be rolled back
+* `TRUNCATE TABLE orders` → instant, no rollback, resets IDs
+
+---
+
+# 🔷 2. DML – **Data Manipulation Language**
+
+DML deals with **manipulating the data** inside tables (not structure).
+
+DML commands **can be rolled back** until committed.
+
+### DML Commands:
+
+* SELECT
+* INSERT
+* UPDATE
+* DELETE
+
+---
+
+## 2.1 `SELECT` — Fetch/read data
+
+The most used SQL command.
+
+### Example:
+
+```sql
+SELECT name, email FROM customers;
+```
+
+### With conditions:
+
+```sql
+SELECT * FROM customers
+WHERE city = 'Mumbai';
+```
+
+### With sorting:
+
+```sql
+SELECT * FROM customers
+ORDER BY name ASC;
+```
+
+---
+
+## 2.2 `INSERT` — Add records
+
+### Example:
+
+```sql
+INSERT INTO customers (name, email)
+VALUES ('Jimmy Patel', 'jimmy@example.com');
+```
+
+### Multiple inserts:
+
+```sql
+INSERT INTO customers (name, email)
+VALUES 
+  ('Alice', 'alice@example.com'),
+  ('Bob', 'bob@example.com');
+```
+
+---
+
+## 2.3 `UPDATE` — Modify records
+
+```sql
+UPDATE customers
+SET city = 'Berlin'
+WHERE id = 1;
+```
+
+⚠️ Without WHERE = DANGEROUS
+
+```sql
+UPDATE customers SET city='Berlin';  
+-- Updates ALL rows
+```
+
+---
+
+## 2.4 `DELETE` — Delete records
+
+```sql
+DELETE FROM customers
+WHERE id = 3;
+```
+
+⚠️ Without WHERE:
+
+```sql
+DELETE FROM customers;  -- deletes ALL rows!!
+```
+
+---
+
+# 🔷 3. DCL – **Data Control Language**
+
+DCL controls **access/permissions** to the database.
+
+Used by DB administrators or DevOps.
+
+### DCL Commands:
+
+* `GRANT`
+* `REVOKE`
+
+---
+
+## 3.1 `GRANT` — Give privileges to users
+
+### Example: Give full privileges on DB
+
+```sql
+GRANT ALL PRIVILEGES ON shop_db.* 
+TO 'app_user'@'%' IDENTIFIED BY 'Password123!';
+```
+
+### Grant only read permissions:
+
+```sql
+GRANT SELECT ON shop_db.* TO 'report_user'@'%';
+```
+
+### Grant specific permissions:
+
+```sql
+GRANT SELECT, INSERT, UPDATE ON shop_db.customers 
+TO 'sales_user'@'%';
+```
+
+---
+
+## 3.2 `REVOKE` — Remove user permissions
+
+### Example:
+
+```sql
+REVOKE INSERT, UPDATE ON shop_db.customers
+FROM 'sales_user'@'%';
+```
+
+### Remove all permissions:
+
+```sql
+REVOKE ALL PRIVILEGES, GRANT OPTION 
+FROM 'app_user'@'%';
+```
+
+---
+
+# 🔷 4. TCL – **Transaction Control Language**
+
+TCL controls **transactions** in SQL.
+
+A transaction = a group of SQL statements that must succeed **together** or **fail together**.
+
+Transactions guarantee **atomicity** (A in ACID).
+
+### TCL Commands:
+
+* COMMIT
+* ROLLBACK
+* SAVEPOINT
+* SET TRANSACTION
+
+---
+
+## 4.1 `COMMIT` — Save all changes permanently
+
+### Example:
+
+```sql
+START TRANSACTION;
+
+UPDATE accounts SET balance = balance - 500 WHERE id = 1;
+UPDATE accounts SET balance = balance + 500 WHERE id = 2;
+
+COMMIT;  -- money transferred permanently
+```
+
+---
+
+## 4.2 `ROLLBACK` — Undo changes since last COMMIT
+
+### Example:
+
+```sql
+START TRANSACTION;
+
+DELETE FROM orders WHERE id = 10;
+
+ROLLBACK;  -- the deletion is undone
+```
+
+Used when:
+
+* Something goes wrong
+* You want to undo partial operations
+
+---
+
+## 4.3 `SAVEPOINT` — Create a checkpoint inside a transaction
+
+Allows **partial rollback**.
+
+### Example:
+
+```sql
+START TRANSACTION;
+
+UPDATE products SET price = price + 100;
+
+SAVEPOINT adjust_prices;
+
+UPDATE products SET stock_quantity = stock_quantity - 10;
+
+ROLLBACK TO adjust_prices;  -- undo only last update
+
+COMMIT;
+```
+
+---
+
+## 4.4 `SET TRANSACTION` — Control isolation levels
+
+Example:
+
+```sql
+SET TRANSACTION ISOLATION LEVEL READ COMMITTED;
+```
+
+---
+
+# ⭐ Summary Table
+
+```text
+============================================================
+SQL COMMAND GROUPS SUMMARY
+============================================================
+
+DDL – Structure
+---------------
+CREATE     → create db/table/index/view
+ALTER      → change table structure
+DROP       → delete table/db
+TRUNCATE   → remove all rows, keep structure
+
+DML – Data
+----------
+SELECT     → read
+INSERT     → add rows
+UPDATE     → modify rows
+DELETE     → remove rows
+
+DCL – Permissions
+-----------------
+GRANT      → give rights
+REVOKE     → remove rights
+
+TCL – Transactions
+------------------
+COMMIT     → save changes
+ROLLBACK   → undo changes
+SAVEPOINT  → define partial rollback point
+SET TRANSACTION → set isolation levels
+```
+
+---
+
+
+============================================================
+1. SERVER & DATABASE LEVEL COMMANDS (MySQL)
+============================================================
+
+---
+
+## 1.1 Connect to MySQL server from terminal
+
+```bash
+mysql -u root -p
+```
+
+* `mysql` → the MySQL **client program** (CLI) that talks to the MySQL server.
+* `-u root` → login as user **root** (default admin user).
+* `-p` → tell MySQL: “ask me for a password”.
+
+After running it, you’ll see:
+
+```text
+Enter password:
+```
+
+You type the password (nothing will be shown as you type) and press Enter.
+
+If successful, you’ll get something like:
+
+```text
+Welcome to the MySQL monitor...
+mysql>
+```
+
+Now you’re **inside** the MySQL shell and can run SQL and admin commands.
+
+### Variants you’ll often use
+
+Specify host (e.g., remote server):
+
+```bash
+mysql -h 127.0.0.1 -P 3306 -u root -p
+```
+
+* `-h` → host
+* `-P` → port (default is 3306)
+
+Login with another user:
+
+```bash
+mysql -u app_user -p
+```
+
+Exit the MySQL shell:
+
+```sql
+EXIT;
+-- or
+QUIT;
+-- or Ctrl + D
+```
+
+---
+
+## 1.2 Show all databases
+
+```sql
+SHOW DATABASES;
+```
+
+Run this **inside** the MySQL shell (`mysql>` prompt).
+
+What it does:
+
+* Lists all databases **you are allowed to see** (based on your privileges).
+* Typical system DBs you’ll see:
+
+  * `information_schema`
+  * `mysql`
+  * `performance_schema`
+  * `sys`
+* And your own: e.g. `erp_db`, `shop_db`, etc.
+
+Example output:
+
+```text
++--------------------+
+| Database           |
++--------------------+
+| information_schema |
+| erp_db             |
+| mysql              |
+| performance_schema |
+| sys                |
++--------------------+
+```
+
+Use this to:
+
+* Check whether your database was created.
+* See naming (typos, wrong env, etc.).
+
+---
+
+## 1.3 Create a new database (simple)
+
+```sql
+CREATE DATABASE erp_db;
+```
+
+This:
+
+* Creates a new **empty database** called `erp_db`.
+* Inside this DB you’ll later create tables, views, etc.
+* No tables yet. Just the container.
+
+If `erp_db` already exists, you’ll get an error:
+
+```text
+ERROR 1007 (HY000): Can't create database 'erp_db'; database exists
+```
+
+You can avoid that using:
+
+```sql
+CREATE DATABASE IF NOT EXISTS erp_db;
+```
+
+---
+
+## 1.3 (b) Create database with charset & collation (good practice)
+
+```sql
+CREATE DATABASE erp_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+```
+
+### What these mean:
+
+* **CHARACTER SET utf8mb4**
+
+  * This defines how text is stored (encoding).
+  * `utf8mb4` is **full UTF-8**, supports:
+
+    * All languages
+    * Emojis
+    * Special symbols
+  * You should basically *always* use `utf8mb4` for modern apps.
+
+* **COLLATE utf8mb4_unicode_ci**
+
+  * Collation = **rules for comparing/sorting text**.
+  * `unicode_ci`:
+
+    * `ci` = case-insensitive (`A` = `a` when comparing).
+    * A good general choice for most languages.
+
+This command:
+
+* Creates DB `erp_db`.
+* Sets default charset/collation for:
+
+  * Newly created tables (if they don’t override it).
+  * String columns inside those tables.
+
+You can still override at table/column level later if needed.
+
+---
+
+## 1.4 See how a database is defined
+
+```sql
+SHOW CREATE DATABASE erp_db;
+```
+
+This shows the **exact SQL** MySQL would use to recreate that database.
+
+Example output:
+
+```text
++----------+--------------------------------------------------------------+
+| Database | Create Database                                              |
++----------+--------------------------------------------------------------+
+| erp_db   | CREATE DATABASE `erp_db` /*!40100 DEFAULT CHARACTER SET utf8mb4
+             COLLATE utf8mb4_unicode_ci */                                |
++----------+--------------------------------------------------------------+
+```
+
+Use this to:
+
+* Confirm charset/collation.
+* Copy definition to another environment.
+* Debug when something is wrong in staging/prod.
+
+---
+
+## 1.5 Change default database
+
+```sql
+USE erp_db;
+```
+
+This sets `erp_db` as your **current database**.
+
+After this:
+
+* `CREATE TABLE ...` will create tables inside `erp_db`.
+* `SELECT * FROM customers;` will refer to `erp_db.customers` (unless you specify another schema).
+
+You can confirm the current database with:
+
+```sql
+SELECT DATABASE();
+```
+
+Example result:
+
+```text
++------------+
+| DATABASE() |
++------------+
+| erp_db     |
++------------+
+```
+
+If you **forget** to run `USE erp_db;` and create tables, they may accidentally end up in `test` or another DB — classic bug in real projects.
+
+You can also explicitly qualify objects:
+
+```sql
+SELECT * FROM erp_db.customers;
+```
+
+But most people just set `USE` once, then work.
+
+---
+
+## 1.6 Rename database (MySQL limitation)
+
+> There is **no** simple `RENAME DATABASE old_name TO new_name;` in MySQL.
+
+The comment:
+
+```sql
+-- 1.6 Rename database (MySQL has no direct RENAME DATABASE; use dump/restore or tools)
+-- (Just remember: no simple RENAME DATABASE in MySQL!)
+```
+
+Means:
+
+* You **cannot** rename a DB with one SQL command.
+* Workarounds (dev/ops level, not pure SQL):
+
+### Option A – Logical migrate (safe way)
+
+1. **Create new DB**:
+
+   ```sql
+   CREATE DATABASE new_name
+     CHARACTER SET utf8mb4
+     COLLATE utf8mb4_unicode_ci;
+   ```
+
+2. **Export old DB**:
+
+   ```bash
+   mysqldump -u root -p old_name > old_name.sql
+   ```
+
+3. **Import into new DB**:
+
+   ```bash
+   mysql -u root -p new_name < old_name.sql
+   ```
+
+4. Optionally **drop old DB**:
+
+   ```sql
+   DROP DATABASE old_name;
+   ```
+
+5. Update app config to use `new_name`.
+
+### Option B – Rename data directory (not recommended unless you know what you’re doing)
+
+* Hacky, filesystem-level, depends on OS, MySQL version, and permissions.
+* You have to stop MySQL, rename folder, edit metadata. Not beginner-friendly.
+
+So: just remember: **no native RENAME DATABASE statement** in MySQL.
+
+---
+
+## 1.7 Modify database default charset / collation
+
+```sql
+ALTER DATABASE erp_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+```
+
+This changes the **defaults** for that DB.
+
+Important details:
+
+* Affects:
+
+  * New tables created **after** this.
+  * New columns without explicit charset/collation.
+
+* Does **NOT automatically convert existing tables/columns**.
+
+  * If tables already exist with a different charset, they stay as they are.
+  * To change them you must run `ALTER TABLE ... CONVERT TO CHARACTER SET ...` per table.
+
+Use cases:
+
+* You created DB earlier with wrong charset (e.g., `latin1`) and now want to fix defaults **before** adding tables.
+* You want to standardize all new objects on `utf8mb4_unicode_ci`.
+
+Check again with:
+
+```sql
+SHOW CREATE DATABASE erp_db;
+```
+
+To ensure it’s applied.
+
+---
+
+## 1.8 Drop (delete) a database
+
+```sql
+DROP DATABASE erp_db;
+```
+
+This:
+
+* Permanently deletes:
+
+  * The database object
+  * All tables
+  * All data inside those tables
+  * Views, triggers, etc.
+
+Requirements:
+
+* You must have `DROP` privilege on that database.
+* You **cannot** drop some system DBs (e.g. `mysql`, `information_schema`).
+
+### Very important cautions:
+
+* This is **irreversible**. Once dropped, data is gone unless you have backup.
+* Always **double-check**:
+
+  * Current hostname (are you on PROD?)
+  * Current environment (dev/test/prod)
+  * Name of database
+
+You can also **not** drop a DB that is currently used by an active connection (in some setups), but usually, MySQL lets you drop it even if you’re `USE erp_db;` — it just switches you to `NULL` database.
+
+---
+
+### Safer version
+
+```sql
+DROP DATABASE IF EXISTS erp_db;
+```
+
+What’s different?
+
+* If `erp_db` does **not** exist:
+
+  * `DROP DATABASE erp_db;` → error.
+  * `DROP DATABASE IF EXISTS erp_db;` → no error, just a warning.
+
+Use `IF EXISTS` in automation scripts (migrations, CI, local dev installs), so scripts don’t fail if DB is already gone.
+
+Example behavior:
+
+```sql
+DROP DATABASE IF EXISTS erp_db;
+CREATE DATABASE erp_db;
+USE erp_db;
+```
+
+This pattern gives you a **clean database** every time for testing.
+
+---
+
+## Mini “flow” of these commands in practice
+
+Here’s how you’d usually use them together in real life:
+
+```bash
+# 1. connect to MySQL
+mysql -u root -p
+```
+
+Then inside MySQL:
+
+```sql
+-- 2. See what already exists
+SHOW DATABASES;
+
+-- 3. Create a fresh database for your app
+CREATE DATABASE IF NOT EXISTS erp_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+-- 4. Check its definition
+SHOW CREATE DATABASE erp_db\G
+
+-- 5. Switch to it
+USE erp_db;
+
+-- 6. (Optionally later) change defaults if needed
+ALTER DATABASE erp_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+-- 7. (Dangerous – only if you really want to destroy it)
+DROP DATABASE IF EXISTS erp_db;
+```
+
+
+
+============================================================
+2. TABLE LEVEL COMMANDS (DDL)
+============================================================
+---
+
+## 2.1 `CREATE TABLE` – Building ERP tables from scratch
+
+Example you had:
+
+```sql
+CREATE TABLE customers (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    name         VARCHAR(100) NOT NULL,
+    email        VARCHAR(100) UNIQUE,
+    city         VARCHAR(100),
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### In ERP context:
+
+This defines the **master customer table**.
+
+* `id INT AUTO_INCREMENT PRIMARY KEY`
+
+  * Each customer gets a unique `id`.
+  * This `id` will be used as a **foreign key** in other ERP tables, e.g. `orders.customer_id`, `invoices.customer_id`, `payments.customer_id`.
+* `name` is required (`NOT NULL`) → you can’t have a customer with no name.
+* `email UNIQUE` → ensures no two customers share the same email → good for login/communication.
+* `created_at DEFAULT CURRENT_TIMESTAMP` → automatically tracks when the customer was added.
+
+### ERP-style tables you’d also create:
+
+**Suppliers:**
+
+```sql
+CREATE TABLE suppliers (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    supplier_code VARCHAR(50) UNIQUE,
+    name         VARCHAR(150) NOT NULL,
+    email        VARCHAR(100),
+    phone        VARCHAR(20),
+    created_at   TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Products:**
+
+```sql
+CREATE TABLE products (
+    id             INT AUTO_INCREMENT PRIMARY KEY,
+    sku            VARCHAR(50) UNIQUE,
+    name           VARCHAR(150) NOT NULL,
+    price          DECIMAL(10,2) NOT NULL,
+    is_active      BOOLEAN DEFAULT TRUE,
+    created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+**Orders (with relation to customers):**
+
+```sql
+CREATE TABLE orders (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id  INT NOT NULL,
+    order_date   DATE NOT NULL,
+    status       VARCHAR(20) NOT NULL DEFAULT 'NEW',
+    total_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    CONSTRAINT fk_orders_customer
+      FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+```
+
+> **Key ERP point:**
+> `CREATE TABLE` is where you define **relationships**:
+>
+> * Primary keys (PK) – your “identity” fields (`id`)
+> * Foreign keys (FK) – your links (`customer_id`, `product_id`, `supplier_id`…)
+
+---
+
+## 2.2 `SHOW TABLES` – See all ERP tables in the current DB
+
+```sql
+SHOW TABLES;
+```
+
+In your ERP database (`USE erp_db;`), this might show:
+
+```text
++-------------------+
+| Tables_in_erp_db  |
++-------------------+
+| customers         |
+| suppliers         |
+| products          |
+| orders            |
+| order_items       |
+| payments          |
+| goods_receipts    |
+| purchase_orders   |
++-------------------+
+```
+
+Use this to:
+
+* Confirm which ERP modules are created.
+* Quickly check after migrations.
+
+---
+
+## 2.3 `DESCRIBE` / `SHOW COLUMNS` – Inspect ERP table structure
+
+```sql
+DESCRIBE customers;
+
+-- or
+SHOW COLUMNS FROM customers;
+```
+
+Output:
+
+```text
++------------+--------------+------+-----+-------------------+----------------+
+| Field      | Type         | Null | Key | Default           | Extra          |
++------------+--------------+------+-----+-------------------+----------------+
+| id         | int          | NO   | PRI | NULL              | auto_increment |
+| name       | varchar(100) | NO   |     | NULL              |                |
+| email      | varchar(100) | YES  | UNI | NULL              |                |
+| city       | varchar(100) | YES  |     | NULL              |                |
+| created_at | timestamp    | YES  | CURRENT_TIMESTAMP       |                |
++------------+--------------+------+-----+-------------------+----------------+
+```
+
+* `Key` column shows:
+
+  * `PRI` → primary key
+  * `UNI` → unique index
+  * `MUL` → indexed, can be non-unique (e.g. FK)
+
+Use this in ERP when:
+
+* You forgot what columns exist (e.g. in `order_items`).
+* You want to confirm if a field is nullable or not (e.g. `status`).
+
+---
+
+## 2.4 `SHOW CREATE TABLE` – See full DDL (with constraints / FKs)
+
+```sql
+SHOW CREATE TABLE customers\G
+```
+
+You’ll see something like:
+
+```text
+Create Table: CREATE TABLE `customers` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `city` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `email` (`email`)
+) ENGINE=InnoDB ...
+```
+
+This is **super important** for ERP:
+
+* Shows all **constraints**: PK, FK, UNIQUE, indexes.
+* When debugging why an `INSERT` fails (e.g. FK constraint fails).
+* When you want to copy structure to another environment.
+
+Example for `orders`:
+
+```sql
+SHOW CREATE TABLE orders\G
+```
+
+Will show `CONSTRAINT fk_orders_customer FOREIGN KEY (customer_id) REFERENCES customers(id)` → confirms the relationship.
+
+---
+
+## 2.5 `ALTER TABLE ... ADD COLUMN` – Evolving your ERP schema
+
+```sql
+ALTER TABLE customers
+ADD COLUMN phone VARCHAR(20);
+```
+
+ERP scenario:
+
+* Business now wants to store **GST number** for customers or **credit_limit**.
+
+Example:
+
+```sql
+ALTER TABLE customers
+ADD COLUMN gst_number VARCHAR(20);
+
+ALTER TABLE customers
+ADD COLUMN credit_limit DECIMAL(10,2) DEFAULT 0;
+```
+
+This is **very common in ERP**:
+
+* Requirements change → new columns needed.
+* `ALTER TABLE` lets you evolve without dropping data.
+
+⚠️ On large ERP tables (millions of rows), `ALTER TABLE` can be heavy and lock tables → in production, this must be planned.
+
+---
+
+## 2.6 `ALTER TABLE ... MODIFY COLUMN` – Change type, size, nullability
+
+```sql
+ALTER TABLE customers
+MODIFY COLUMN name VARCHAR(150) NOT NULL;
+```
+
+ERP use cases:
+
+* `name` too short? Increase from 100 to 200.
+* `phone` was nullable, now you want to make it `NOT NULL`.
+* `price` from `INT` to `DECIMAL(10,2)` because you now support paise/cents.
+
+Example:
+
+```sql
+ALTER TABLE products
+MODIFY COLUMN price DECIMAL(12,2) NOT NULL;
+```
+
+⚠️ Be careful:
+
+* Changing type may fail if existing data doesn’t fit (e.g. shrinking size).
+* Changing nullable → NOT NULL requires no existing NULLs.
+
+---
+
+## 2.7 `ALTER TABLE ... RENAME COLUMN` – Rename with clarity
+
+```sql
+ALTER TABLE customers
+RENAME COLUMN city TO town;
+```
+
+In ERP context, you might do:
+
+* `name` → `full_name`
+* `amount` → `total_amount`
+* `status` → `order_status`
+
+Example:
+
+```sql
+ALTER TABLE orders
+RENAME COLUMN amount TO total_amount;
+```
+
+Why rename?
+
+* To make meaning clearer as ERP grows.
+* To align with business terminology (`gross_total`, `net_total`, etc.).
+
+⚠️ After renaming:
+
+* Update all **queries, views, stored procedures, API code** that reference old name.
+
+---
+
+## 2.8 `ALTER TABLE ... DROP COLUMN` – Remove unused ERP fields
+
+```sql
+ALTER TABLE customers
+DROP COLUMN phone;
+```
+
+ERP scenarios:
+
+* You stored `fax_number` earlier, but it’s no longer used.
+* Old column `legacy_code` is now replaced by `customer_code`.
+
+Example:
+
+```sql
+ALTER TABLE products
+DROP COLUMN legacy_code;
+```
+
+⚠️ Be careful:
+
+* Data is **lost permanently**.
+* Check if any code, reports, or integrations still use that column.
+
+---
+
+## 2.9 `ALTER TABLE ... ADD PRIMARY KEY` – Define identity in ERP tables
+
+```sql
+ALTER TABLE customers
+ADD CONSTRAINT pk_customers_id
+PRIMARY KEY (id);
+```
+
+You use this if:
+
+* You created table without PK (bad, but happens in quick POCs).
+* Now you want proper relationships: e.g. `orders.customer_id` needs a PK to reference.
+
+ERP example: You had a `suppliers` table without PK:
+
+```sql
+CREATE TABLE suppliers (
+    supplier_code VARCHAR(50),
+    name          VARCHAR(150)
+);
+```
+
+Now fix it:
+
+```sql
+ALTER TABLE suppliers
+ADD COLUMN id INT AUTO_INCREMENT PRIMARY KEY;
+```
+
+Or if `supplier_code` is unique and should be PK:
+
+```sql
+ALTER TABLE suppliers
+ADD CONSTRAINT pk_suppliers_code
+PRIMARY KEY (supplier_code);
+```
+
+> **Best practice in ERP:**
+> Every table (especially master & transactional) should have a **primary key**.
+
+---
+
+## 2.10 `ALTER TABLE ... ADD UNIQUE` – Business rules in ERP
+
+```sql
+ALTER TABLE customers
+ADD CONSTRAINT uq_customers_email
+UNIQUE (email);
+```
+
+ERP-style common unique constraints:
+
+* `customers.customer_code`
+* `suppliers.supplier_code`
+* `products.sku`
+* `warehouses.code`
+* `invoices.invoice_number`
+* `purchase_orders.po_number`
+
+Example:
+
+```sql
+ALTER TABLE products
+ADD CONSTRAINT uq_products_sku
+UNIQUE (sku);
+
+ALTER TABLE invoices
+ADD CONSTRAINT uq_invoices_invoice_number
+UNIQUE (invoice_number);
+```
+
+Why?
+
+* Enforces **business uniqueness rules** at DB level (not just in code).
+* Prevents duplicates that break reporting & integrations.
+
+---
+
+## 2.11 `CREATE TABLE ... FOREIGN KEY` – Linking ERP tables
+
+Your example:
+
+```sql
+CREATE TABLE orders (
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id  INT,
+    order_date   DATE,
+    amount       DECIMAL(10,2),
+    CONSTRAINT fk_orders_customer
+      FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+```
+
+In ERP:
+
+* `orders.customer_id` → `customers.id`
+* This means:
+
+  * You cannot create an order for a non-existing customer.
+  * You cannot (by default) delete a customer who still has orders (unless `ON DELETE CASCADE` or you drop FK).
+
+More ERP FK examples:
+
+```sql
+CREATE TABLE order_items (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    order_id   INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity   INT NOT NULL,
+    unit_price DECIMAL(10,2) NOT NULL,
+    line_total DECIMAL(10,2) NOT NULL,
+    CONSTRAINT fk_order_items_order
+      FOREIGN KEY (order_id) REFERENCES orders(id),
+    CONSTRAINT fk_order_items_product
+      FOREIGN KEY (product_id) REFERENCES products(id)
+);
+```
+
+```sql
+CREATE TABLE payments (
+    id         INT AUTO_INCREMENT PRIMARY KEY,
+    order_id   INT NOT NULL,
+    amount     DECIMAL(10,2) NOT NULL,
+    paid_on    DATE NOT NULL,
+    method     VARCHAR(20),
+    CONSTRAINT fk_payments_order
+      FOREIGN KEY (order_id) REFERENCES orders(id)
+);
+```
+
+### With cascading (important in ERP):
+
+```sql
+FOREIGN KEY (order_id) REFERENCES orders(id)
+  ON DELETE CASCADE
+  ON UPDATE CASCADE;
+```
+
+* `ON DELETE CASCADE` → delete order → its items & payments also deleted.
+
+  * Useful for test data or when you allow deleting whole orders.
+* `ON DELETE RESTRICT` (default) → you cannot delete order if it has items/payments.
+
+> **Design decision in ERP:**
+>
+> * Usually **master data** (customers, products) use `RESTRICT` (don’t allow deleting if used).
+> * Child tables like `order_items`, `payments` often use `CASCADE` from their parent `orders`.
+
+---
+
+## 2.12 `ALTER TABLE ... DROP FOREIGN KEY` – Breaking a relationship
+
+Before dropping an FK, first **find its name**:
+
+```sql
+SHOW CREATE TABLE orders\G
+```
+
+Look for something like:
+
+```text
+CONSTRAINT `fk_orders_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`)
+```
+
+Then:
+
+```sql
+ALTER TABLE orders
+DROP FOREIGN KEY fk_orders_customer;
+```
+
+ERP use cases:
+
+* You want to **change** the FK to add `ON DELETE CASCADE` or `SET NULL`.
+* You are going to **drop the parent table** (e.g. redesigning schema).
+* During a **data migration**, you temporarily remove constraints.
+
+Example – changing FK behavior:
+
+```sql
+ALTER TABLE orders
+DROP FOREIGN KEY fk_orders_customer;
+
+ALTER TABLE orders
+ADD CONSTRAINT fk_orders_customer
+FOREIGN KEY (customer_id) REFERENCES customers(id)
+ON DELETE RESTRICT
+ON UPDATE CASCADE;
+```
+
+⚠️ Once you drop FK:
+
+* DB no longer protects referential integrity.
+* You could insert `orders.customer_id = 9999` even if that customer doesn’t exist.
+
+---
+
+## 2.13 `RENAME TABLE` – Renaming ERP modules safely
+
+```sql
+RENAME TABLE customers TO clients;
+```
+
+In ERP, you might:
+
+* Change `orders` → `sales_orders`
+* `suppliers` → `vendors`
+* `payments` → `customer_payments`
+
+Example:
+
+```sql
+RENAME TABLE orders TO sales_orders;
+```
+
+**Important:**
+
+* Foreign keys stay connected automatically (they reference table ID, not just name).
+* But **all code** (backend, reports, procedures) must be updated to use new name.
+
+---
+
+## 2.14 `TRUNCATE TABLE` – Clear ERP transactional data
+
+```sql
+TRUNCATE TABLE orders;
+```
+
+This:
+
+* Deletes **all rows** from `orders`.
+* Resets `AUTO_INCREMENT` counter.
+* Faster than `DELETE FROM orders;`.
+
+ERP real-life uses:
+
+* In **development/testing**, reset `orders`, `order_items`, `payments` but keep table structure.
+* End-to-end test runs where you want a fresh DB.
+
+⚠️ In production ERP:
+
+* Be **extremely careful**.
+* You usually *never* truncate core tables like `orders`, `invoices`, `payments` in a live system.
+
+Also: if `order_items` has FK to `orders` with `ON DELETE CASCADE`, truncating `orders` may fail (MySQL treats TRUNCATE like DROP+CREATE; FKs can block it). You might need to:
+
+1. `TRUNCATE TABLE order_items;`
+2. `TRUNCATE TABLE orders;`
+
+---
+
+## 2.15 `DROP TABLE` – Remove an ERP table completely
+
+```sql
+DROP TABLE orders;
+```
+
+This:
+
+* Deletes the table **structure + all data + indexes + constraints**.
+
+Safer version:
+
+```sql
+DROP TABLE IF EXISTS orders;
+```
+
+ERP context:
+
+* Dropping test tables (`temp_import`, `staging_orders`).
+* Redesigning part of schema (e.g., replacing `old_payments` with new structure).
+
+⚠️ Before dropping a table with relations:
+
+* You must **drop foreign keys** in other tables that reference it
+  (or drop those child tables first).
+
+Example:
+
+```sql
+DROP TABLE order_items;   -- child
+DROP TABLE orders;        -- parent
+```
+
+Or:
+
+```sql
+ALTER TABLE order_items DROP FOREIGN KEY fk_order_items_order;
+DROP TABLE orders;
+```
+
+---
+
+============================================================
+3. BASIC DATA COMMANDS (DML)
+============================================================
+
+## 📌 *What is DML?*
+
+DML = **Data Manipulation Language**
+Used to **write, read, modify, and delete actual data** stored inside tables.
+
+DML does NOT change table structure — that’s DDL’s job.
+
+### DML includes:
+
+* **INSERT** — Add new records
+* **SELECT** — Retrieve data
+* **UPDATE** — Modify data
+* **DELETE** — Remove data
+
+### In ERP systems:
+
+DML is used **every second** by:
+
+* Sales Module
+* Purchasing Module
+* Inventory Module
+* Accounting Module
+* HR/Payroll Module
+* CRM Module
+* Warehouse Module
+
+---
+
+# ------------------------------------------------------------
+
+# 🔶 **3.1 INSERT — Add New Rows Into ERP Tables (Deep)**
+
+# ------------------------------------------------------------
+
+## ✔ **Purpose of INSERT in ERP**
+
+INSERT is used whenever the business creates something new:
+
+* New **customer**
+* New **supplier/vendor**
+* New **product**
+* New **sales order**
+* New **purchase order**
+* New **invoice**
+* New **payment**
+* New **stock movement**
+
+INSERT is the **foundation** of ERP transactions.
+
+---
+
+## ✔ **Basic INSERT (Single Row)**
+
+```sql
+INSERT INTO customers (name, email, city)
+VALUES ('Jimmy Patel', 'jimmy@example.com', 'Erlangen');
+```
+
+### 🔍 What happens internally:
+
+1. A new row is created in `customers`.
+2. `id` (AUTO_INCREMENT PK) is generated.
+3. `created_at` timestamp is automatically filled.
+4. Constraints checked:
+
+   * UNIQUE email?
+   * NOT NULL fields?
+   * Data types valid?
+
+### 🔥 ERP Example:
+
+Creating a new customer before making a sales order.
+
+---
+
+## ✔ **INSERT Multiple Rows (Bulk Import)**
+
+```sql
+INSERT INTO customers (name, email, city)
+VALUES
+ ('Alice', 'alice@example.com', 'Mumbai'),
+ ('Bob',   'bob@example.com',   'Delhi');
+```
+
+### 🔍 Real ERP Use Case:
+
+* Importing **thousands of customers** from Excel
+* Bulk uploading **products** from a supplier
+* Initial stock setup
+* Migrating data from old ERP to new ERP
+
+### ✔ Performance Tip:
+
+Use multi-value INSERT for performance — fewer round trips to DB.
+
+---
+
+## ✔ **INSERT with NULLS**
+
+```sql
+INSERT INTO customers (name)
+VALUES ('Unknown Customer');
+```
+
+✓ Allowed if columns allow NULL
+
+❌ Not allowed if columns have NOT NULL or UNIQUE constraints.
+
+---
+
+## ✔ **INSERT Violations Explained (ERP Context)**
+
+### 1️⃣ UNIQUE Violation
+
+Trying to insert a customer with an email already in DB:
+
+```
+ERROR 1062 (23000): Duplicate entry 'alice@example.com' for key 'email'
+```
+
+Solution:
+
+* Correct data
+* Remove duplicates
+* Allow NULL emails if business rules allow
+
+---
+
+### 2️⃣ FOREIGN KEY Violation
+
+**Bad:**
+
+```sql
+INSERT INTO orders (customer_id, order_date)
+VALUES (9999, '2025-02-01');   -- Customer does NOT exist
+```
+
+**Error:**
+
+```
+Cannot add or update a child row: a foreign key fails
+```
+
+This prevents corrupted ERP data.
+
+---
+
+## ✔ **INSERT…SELECT (copy data)**
+
+```sql
+INSERT INTO new_products (name, price)
+SELECT name, price FROM products
+WHERE price > 1000;
+```
+
+Used for:
+
+* Data backup
+* Archiving
+* Migration
+* Splitting big ERP tables
+
+---
+
+# ------------------------------------------------------------
+
+# 🔶 **3.2 SELECT — Read ERP Data (Very Deep Level)**
+
+# ------------------------------------------------------------
+
+SELECT is the **most important** SQL command in all ERP systems.
+
+Every screen you see in SAP, Oracle, NetSuite, Odoo, Dynamics is built from SELECT queries.
+
+---
+
+## ✔ **Basic SELECT**
+
+```sql
+SELECT * FROM customers;
+```
+
+Shows all customers.
+
+⚠ **Never use SELECT * in production**
+
+* Fetches unnecessary data
+* Slower
+* Breaks API code if columns change
+
+---
+
+## ✔ **SELECT Specific Columns**
+
+```sql
+SELECT id, name, city
+FROM customers
+WHERE city = 'Mumbai';
+```
+
+### 🔍 ERP Use Case:
+
+Used for:
+
+* Delivery routing
+* City-wise sales
+* Customer segmentation
+* Assigned sales reps
+
+---
+
+## ✔ **JOINs in ERP (MOST IMPORTANT PART!)**
+
+ERP = **massive interlinked tables**
+
+### Example: All Orders With Customer Names
+
+```sql
+SELECT o.id, c.name, o.order_date, o.total_amount
+FROM orders o
+JOIN customers c ON c.id = o.customer_id;
+```
+
+### Why JOINs matter in ERP:
+
+* Orders → Customer
+* Order Items → Product
+* Purchase Orders → Supplier
+* Invoices → Currency
+* Goods Receipt → Warehouse
+* Payments → Orders
+* Ledger → Accounts
+
+ERP relies on **hundreds of JOIN queries** per second.
+
+---
+
+## ✔ **Filtering (WHERE)**
+
+```sql
+SELECT * FROM products
+WHERE stock_quantity < reorder_level;
+```
+
+Used in inventory management:
+
+* Trigger auto purchase orders
+* Identify shortages
+* Generate warehouse alerts
+
+---
+
+## ✔ **Sorting**
+
+```sql
+SELECT name, total_amount
+FROM customers
+ORDER BY total_amount DESC;
+```
+
+Used for:
+
+* Top customers report
+* ABC analysis
+* Sales leaderboards
+
+---
+
+## ✔ **Grouping & Aggregation (ERP Analytics)**
+
+```sql
+SELECT customer_id, COUNT(*) AS total_orders
+FROM orders
+GROUP BY customer_id;
+```
+
+ERP use:
+
+* Count orders per customer
+* Total spend
+* Profit per product
+* Inventory movement summary
+
+---
+
+# ------------------------------------------------------------
+
+# 🔶 **3.3 UPDATE — Modify Existing ERP Data (Deep Detail)**
+
+# ------------------------------------------------------------
+
+UPDATE is powerful but dangerous.
+
+---
+
+## ✔ **Basic Update**
+
+```sql
+UPDATE customers
+SET city = 'Berlin'
+WHERE id = 1;
+```
+
+### ERP use cases:
+
+* Customer moved
+* Correcting wrong phone/email
+* Updating tax information
+* Changing customer category
+
+---
+
+## ✔ **Updating Many Rows at Once (Bulk Updates)**
+
+```sql
+UPDATE customers
+SET credit_limit = credit_limit * 1.10
+WHERE city = 'Mumbai';
+```
+
+### ERP use case:
+
+* Increase credit limit region-wise
+* Update product price after inflation
+* Correct wrong tax code
+* Set inactive customers
+
+---
+
+## ✔ **UPDATE with Joins (MOST USED IN ERP)**
+
+```sql
+UPDATE products p
+JOIN product_categories c ON p.category_id = c.id
+SET p.price = p.price * 1.05
+WHERE c.name = 'Electronics';
+```
+
+Used for:
+
+* Mass price updates
+* Mass category updates
+* Changing warehouses for entire product groups
+
+---
+
+## ✔ **Updating Order Totals**
+
+```sql
+UPDATE orders o
+JOIN (
+  SELECT order_id, SUM(line_total) AS total
+  FROM order_items
+  GROUP BY order_id
+) t ON o.id = t.order_id
+SET o.total_amount = t.total;
+```
+
+ERP systems constantly recalculate totals.
+
+---
+
+# ------------------------------------------------------------
+
+# 🔶 **3.4 DELETE — Remove Rows (ERP Best Practices)**
+
+# ------------------------------------------------------------
+
+DELETE is **dangerous** because ERP data is critical.
+
+---
+
+## ✔ **Delete Specific Row**
+
+```sql
+DELETE FROM customers
+WHERE id = 3;
+```
+
+### BUT in ERP:
+
+Deleting master data is **not allowed** if related records exist.
+
+Why?
+
+Because:
+
+* A customer used in orders cannot be deleted
+* A product used in invoices cannot be deleted
+* A supplier used in purchase orders cannot be deleted
+
+ERP maintains **data integrity forever**.
+
+---
+
+## ✔ **Delete With Relationships (May Fail)**
+
+If orders table has:
+
+```sql
+FOREIGN KEY (customer_id) REFERENCES customers(id)
+```
+
+Then:
+
+```sql
+DELETE FROM customers WHERE id = 1;
+```
+
+= ❌ **Error**
+Because orders still reference that customer.
+
+ERP solution:
+
+* Use `is_active` flag instead of hard delete
+
+```sql
+UPDATE customers SET is_active = 0 WHERE id = 1;
+```
+
+---
+
+## ✔ **Delete ALL rows**
+
+```sql
+DELETE FROM customers;
+```
+
+### NEVER in production
+
+Safe only in:
+
+* Development
+* Unit tests
+* Resetting demo environment
+
+---
+
+## ✔ **TRUNCATE (Faster but more dangerous)**
+
+```sql
+TRUNCATE TABLE customers;
+```
+
+### Behavior:
+
+* Auto-increment resets
+* Cannot be rolled back
+* FKs may block it
+
+ERP systems **never truncate core tables**.
+
+---
+
+# ⭐ **DML in ERP — Real-Life Workflows**
+
+Here are real DML sequences used in a functioning ERP:
+
+---
+
+## ✔ **Sales Workflow**
+
+1️⃣ Insert customer
+2️⃣ Insert sales order
+3️⃣ Insert order items
+4️⃣ Update stock (inventory OUT)
+5️⃣ Insert invoice
+6️⃣ Insert payment
+7️⃣ Update order status
+
+---
+
+## ✔ **Purchase Workflow**
+
+1️⃣ Insert supplier
+2️⃣ Insert purchase order
+3️⃣ Insert purchase order items
+4️⃣ Insert goods receipt
+5️⃣ Update product stock (inventory IN)
+6️⃣ Insert supplier invoice
+7️⃣ Insert supplier payment
+
+---
+
+## ✔ **Inventory Adjustment**
+
+1️⃣ Insert stock movement
+2️⃣ Update product quantity
+3️⃣ Log audit trail
+
+---
+
+# ⭐ **Final DML Cheat Sheet (ERP Version)**
+
+```
+--------------------- INSERT ---------------------
+Adds new customers, orders, products, payments, items
+
+--------------------- SELECT ---------------------
+Reads data across ERP modules using JOIN, WHERE, GROUP BY
+
+--------------------- UPDATE ---------------------
+Modifies existing master & transactional data
+Used for price changes, status updates, corrections
+
+--------------------- DELETE ---------------------
+Removes data (rare in ERP)
+Usually replaced by soft deletion (is_active=0)
+
+--------------------------------------------------
+```
+
+
+============================================================
+4. QUERYING WITH FILTERS, SORTING, LIMIT
+============================================================
+
+This section teaches how to **extract data intelligently** using:
+
+- Conditions  
+- Comparisons  
+- Sorting  
+- Pagination  
+
+These are used **thousands of times per second** inside ERP systems.
+
+---
+
+# ------------------------------------------------------------
+# 🔶 4.1 WHERE — Filtering Data Using Conditions  
+# ------------------------------------------------------------
+
+The `WHERE` clause helps you select only the rows that meet a condition.
+
+ERP systems need `WHERE` for:
+
+- Customer search  
+- Order search  
+- Product search  
+- Inventory filtering  
+- Supplier filtering  
+- Payment tracking  
+- Reports and dashboards  
+
+---
+
+## ⭐ 4.1.1 Equality
+
+```sql
+SELECT * FROM customers
+WHERE city = 'Mumbai';
+```
+
+### ERP Use Case:
+- List all customers in a region  
+- Assign orders based on location  
+- Tax/GST applied based on customer location  
+- Filtering for targeted marketing  
+
+---
+
+## ⭐ 4.1.2 Greater Than / Less Than
+
+```sql
+SELECT * FROM orders
+WHERE amount > 1000;
+```
+
+### ERP Use Case:
+- Get all large orders  
+- Fraud detection (sudden high-value orders)  
+- Apply extra checks for expensive items  
+- Analyze high-value sales  
+
+---
+
+## ⭐ 4.1.3 BETWEEN (range filter)
+
+```sql
+SELECT * FROM orders
+WHERE amount BETWEEN 1000 AND 5000;
+```
+
+### ERP Use Case:
+- Monthly sales report  
+- Mid-value order analysis  
+- Data segmentation  
+- Revenue analytics  
+
+---
+
+## ⭐ 4.1.4 IN (multiple matches)
+
+```sql
+SELECT * FROM customers
+WHERE city IN ('Mumbai', 'Delhi', 'Bangalore');
+```
+
+### ERP Use Case:
+- Show customers from metro areas  
+- Filter customers for logistics  
+- Filter suppliers from selected states  
+- Filter orders from certain sales channels  
+
+---
+
+## ⭐ 4.1.5 LIKE (pattern matching)
+
+```sql
+SELECT * FROM customers
+WHERE name LIKE 'J%';   -- starts with J
+```
+
+### ERP Use Case:
+- Search customer by initials  
+- Quick search in CRM module  
+- Auto-complete suggestions  
+- Product search (“Samsung”, “SanDisk”)  
+
+More patterns:
+
+```sql
+LIKE '%son'   -- ends with 'son'
+LIKE '%an%'   -- contains 'an'
+LIKE '_a%'    -- 2nd letter is 'a'
+```
+
+---
+
+## ⭐ 4.1.6 Multiple Conditions (AND / OR)
+
+```sql
+SELECT * FROM orders
+WHERE status = 'PAID'
+AND amount > 5000;
+```
+
+### ERP Use Case:
+- High-value paid orders  
+- Shipment priority  
+- Customer credit analysis  
+
+```sql
+SELECT * FROM customers
+WHERE city = 'Mumbai'
+OR city = 'Delhi';
+```
+
+### Combine:
+
+```sql
+SELECT * FROM products
+WHERE is_active = 1
+AND stock_quantity > 0;
+```
+
+Used for:
+- Only active, in-stock products  
+- Sales ordering screens  
+
+---
+
+# ------------------------------------------------------------
+# 🔶 4.2 ORDER BY — Sorting Results  
+# ------------------------------------------------------------
+
+Sorting is crucial in dashboards, reports, transaction histories, and lists.
+
+---
+
+## ⭐ Sort alphabetically
+
+```sql
+SELECT * FROM customers
+ORDER BY name ASC;
+```
+
+### Use Cases in ERP:
+- Alphabetical customer list  
+- Supplier directory sorting  
+- Warehouse item listing  
+
+---
+
+## ⭐ Sort in descending (latest first)
+
+```sql
+SELECT * FROM orders
+ORDER BY order_date DESC, amount DESC;
+```
+
+### Why two fields?
+
+1. Show **latest orders first**  
+2. If two orders have the same date → higher amount shown first  
+
+### ERP Use Case:
+- Sales dashboard  
+- Manager reports  
+- Order dispatch planning  
+
+---
+
+## ⭐ Sort by multiple columns
+
+```sql
+ORDER BY status ASC, order_date DESC;
+```
+
+ERP Use Case:
+- “Group orders by status, show newest within each status group”  
+
+E.g.:
+
+```
+DRAFT
+CONFIRMED
+SHIPPED
+INVOICED
+```
+
+Each status bucket sorted by latest date.
+
+---
+
+# ------------------------------------------------------------
+# 🔶 4.3 LIMIT — Limiting Rows (Performance + Pagination)
+# ------------------------------------------------------------
+
+LIMIT controls how many rows to return.
+
+This is used in:
+
+- Web pages  
+- Mobile ERP apps  
+- Dashboards  
+- API results  
+- Infinite scrolls  
+
+---
+
+## ⭐ Get first N rows
+
+```sql
+SELECT * FROM customers
+ORDER BY id
+LIMIT 10;
+```
+
+### ERP Use Case:
+- Show first 10 customers  
+- Show top 10 selling products  
+- Show most recent 10 orders  
+
+---
+
+## ⭐ Pagination (page 1, 10 rows)
+
+```sql
+SELECT * FROM customers
+ORDER BY id
+LIMIT 10 OFFSET 0;
+```
+
+## ⭐ Pagination (page 2, 10 rows)
+
+```sql
+SELECT * FROM customers
+ORDER BY id
+LIMIT 10 OFFSET 10;
+```
+
+## ⭐ Pagination (page 3, 10 rows)
+
+```sql
+SELECT * FROM customers
+ORDER BY id
+LIMIT 10 OFFSET 20;
+```
+
+### Why OFFSET?
+
+OFFSET = number of rows to skip
+
+| Page | Rows per page | OFFSET |
+|------|----------------|--------|
+| 1    | 10             | 0      |
+| 2    | 10             | 10     |
+| 3    | 10             | 20     |
+| 4    | 10             | 30     |
+
+ERP systems use this for:
+
+- Sales order list  
+- Invoice list  
+- Transaction history  
+- Inventory movement logs  
+- Warehouse stock search  
+
+---
+
+## ⭐ LIMIT without ORDER BY is unsafe
+
+```sql
+SELECT * FROM customers LIMIT 10;
+```
+
+This returns **random rows** depending on engine/internal ordering.
+
+ERP systems ALWAYS use:
+
+```sql
+ORDER BY id
+LIMIT 10;
+```
+
+---
+
+# ------------------------------------------------------------
+# 🔶 REAL ERP FILTERING EXAMPLES
+# ------------------------------------------------------------
+
+## ✔ 1. Get all overdue invoices
+
+```sql
+SELECT * FROM invoices
+WHERE due_date < CURRENT_DATE
+AND status != 'PAID';
+```
+
+---
+
+## ✔ 2. Get low-stock products
+
+```sql
+SELECT * FROM products
+WHERE stock_quantity < min_stock_level;
+```
+
+---
+
+## ✔ 3. Get customers with high outstanding balance
+
+```sql
+SELECT c.*, SUM(i.balance_due) AS total_due
+FROM customers c
+JOIN invoices i ON i.customer_id = c.id
+WHERE i.balance_due > 0
+GROUP BY c.id
+ORDER BY total_due DESC
+LIMIT 20;
+```
+
+---
+
+## ✔ 4. Get all supplier purchase orders pending approval
+
+```sql
+SELECT *
+FROM purchase_orders
+WHERE status = 'PENDING_APPROVAL'
+ORDER BY order_date ASC;
+```
+
+---
+
+## ✔ 5. Get top 10 selling products
+
+```sql
+SELECT p.name, SUM(oi.quantity) AS qty_sold
+FROM order_items oi
+JOIN products p ON p.id = oi.product_id
+GROUP BY p.id
+ORDER BY qty_sold DESC
+LIMIT 10;
+```
+
+---
+
+# ------------------------------------------------------------
+# 🔶 FULL SECTION SUMMARY (Save This)
+# ------------------------------------------------------------
+
+```
+WHERE → filters rows using conditions
+  =   <>   <   >   <=   >=   BETWEEN   IN   LIKE   AND   OR
+
+ORDER BY → sorts data
+  ASC   DESC   multi-column sorting
+
+LIMIT → restricts number of rows
+  LIMIT N
+  LIMIT N OFFSET X   (Pagination)
+
+Used in:
+- Search screens
+- Dashboards
+- Reports
+- API pagination
+- Sorting by dates/amounts
+- Filtering by status/region/category
+```
+
+---
+
+
+============================================================
+5. JOINS (RELATIONSHIPS BETWEEN TABLES)
+============================================================
+
+TABLE STRUCTURE:
+----------------
+customers(id, name, city)
+orders(id, customer_id, amount, order_date)
+
+RELATIONSHIP:
+-------------
+customers.id  <--- orders.customer_id
+(One customer can have MANY orders)
+
+============================================================
+5.1 INNER JOIN (ONLY MATCHING ROWS)
+============================================================
+
+QUERY:
+------
+SELECT
+  c.id      AS customer_id,
+  c.name    AS customer_name,
+  o.id      AS order_id,
+  o.amount
+FROM customers c
+INNER JOIN orders o
+  ON o.customer_id = c.id;
+
+BEHAVIOR:
+---------
+- Returns ONLY rows where customers.id = orders.customer_id
+- Customers WITHOUT orders are EXCLUDED
+- Orders WITHOUT valid customer (FK issues) are EXCLUDED
+
+RESULT PATTERN:
+---------------
+customer_id | customer_name | order_id | amount
+------------------------------------------------
+1           | Jimmy         | 1        | 4500
+1           | Jimmy         | 2        | 2300
+2           | Alice         | 3        | 2200
+(Bob is removed because no orders)
+
+USE CASES (ERP):
+----------------
+✓ Show orders WITH customer details
+✓ Sales order reports
+✓ Invoice → Order → Customer report
+✓ Payments linked to invoices
+✓ Inventory linked to products
+✓ Only CLEAN connected data
+
+INNER JOIN SUMMARY:
+-------------------
+- STRICT matching
+- NO NULLS
+- Smaller result set
+- Used for transactional accuracy
+
+============================================================
+5.2 LEFT JOIN (ALL LEFT ROWS + MATCHING RIGHT ROWS)
+============================================================
+
+QUERY:
+------
+SELECT
+  c.id,
+  c.name,
+  o.id      AS order_id,
+  o.amount
+FROM customers c
+LEFT JOIN orders o
+  ON o.customer_id = c.id;
+
+BEHAVIOR:
+---------
+- Returns ALL customers
+- Orders appear IF they exist
+- If no matching orders → order fields = NULL
+
+RESULT PATTERN:
+---------------
+id | name  | order_id | amount
+-----------------------------------------
+1  | Jimmy | 1        | 4500
+1  | Jimmy | 2        | 2300
+2  | Alice | 3        | 2200
+3  | Bob   | NULL     | NULL
+(Bob included with NULLs because no orders)
+
+USE CASES (ERP):
+----------------
+✓ Show ALL customers, even without orders
+✓ Identify customers who never ordered
+✓ Products with zero sales
+✓ Suppliers with no POs
+✓ Warehouses with no stock
+✓ Employees with no attendance today
+
+LEFT JOIN SUMMARY:
+------------------
+- COMPLETE data from left table
+- NULLs on right for missing records
+- Used for master lists and missing-data reports
+
+============================================================
+INNER JOIN VS LEFT JOIN (DEEP COMPARISON)
+============================================================
+
+INNER JOIN:
+-----------
+- Shows ONLY matched rows
+- Removes unmatched customers
+- No NULLs
+- More performance-friendly
+
+LEFT JOIN:
+----------
+- Shows ALL customers
+- Includes NULLs for missing orders
+- Used for FULL DATA VISIBILITY
+
+============================================================
+VISUAL DIAGRAMS
+============================================================
+
+-- INNER JOIN VISUAL --
+customers         orders
+---------         -----------
+1 Jimmy     -->   (match)
+2 Alice     -->   (match)
+3 Bob       -->   (no match, dropped)
+
+Result:
+Jimmy rows, Alice rows
+
+-- LEFT JOIN VISUAL --
+customers         orders
+---------         -----------
+1 Jimmy     -->   (match)
+2 Alice     -->   (match)
+3 Bob       -->   (no match, NULL)
+
+Result:
+Jimmy rows, Alice rows, Bob(NULL)
+
+============================================================
+ADVANCED ERRORS & NOTES
+============================================================
+
+IMPORTANT NOTE:
+---------------
+WHERE conditions can turn LEFT JOIN into INNER JOIN.
+
+BAD:
+----
+SELECT ...
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+WHERE o.amount > 1000;
+
+→ Removes NULL rows → becomes INNER JOIN accidentally
+
+CORRECT:
+--------
+WHERE o.amount > 1000 OR o.id IS NULL;
+
+============================================================
+ERP JOIN PATTERNS (REAL WORLD)
+============================================================
+
+1) CUSTOMERS WITH NO ORDERS:
+----------------------------
+SELECT c.*
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+WHERE o.id IS NULL;
+
+2) ORDERS WITH CUSTOMER INFO:
+------------------------------
+SELECT o.*, c.name
+FROM orders o
+INNER JOIN customers c ON c.id = o.customer_id;
+
+3) ORDER COUNT PER CUSTOMER:
+-----------------------------
+SELECT c.name, COUNT(o.id) AS order_count
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+GROUP BY c.id;
+
+4) PRODUCT SALES SUMMARY:
+--------------------------
+JOIN products → order_items → orders
+
+============================================================
+JOIN SUMMARY (FINAL)
+============================================================
+
+INNER JOIN:
+-----------
+✔ Matching records only
+✔ No NULLs
+✔ Used for transactional relationships
+
+LEFT JOIN:
+----------
+✔ All left records (even without matches)
+✔ Produces NULLs
+✔ Used for master data completeness
+
+
+============================================================
+6. AGGREGATION & GROUPING
+============================================================
+
+AGGREGATE FUNCTIONS:
+--------------------
+COUNT()    → count rows
+SUM()      → add numeric values
+AVG()      → average
+MIN()      → smallest value
+MAX()      → largest value
+
+GROUP BY:
+---------
+Used to combine rows into groups (customer-level totals, product-level totals)
+
+HAVING:
+-------
+Filter AFTER GROUPING (cannot use WHERE after a group)
+
+============================================================
+6.1 COUNT() — COUNT ROWS
+============================================================
+
+QUERY:
+------
+SELECT COUNT(*) AS total_customers
+FROM customers;
+
+MEANING:
+--------
+- Count ALL rows in customers table
+- COUNT(*) counts null and non-null rows
+- Useful for total records
+
+ERP USE CASES:
+--------------
+✓ Total number of customers
+✓ Total number of products
+✓ Total active users
+✓ Total employees
+✓ Total transactions in a day
+
+RESULT EXAMPLE:
+---------------
+total_customers
+----------------
+15324
+
+============================================================
+6.2 SUM() — ADD VALUES
+============================================================
+
+QUERY:
+------
+SELECT SUM(amount) AS total_revenue
 FROM orders;
-```
 
-### 6. GROUP BY - Grouping Data
-```sql
--- Basic grouping
-SELECT category, COUNT(*) FROM products GROUP BY category;
+MEANING:
+--------
+- Adds up all order amounts
+- Returns a single total value
 
--- Multiple columns grouping
-SELECT category, brand, COUNT(*) 
-FROM products 
-GROUP BY category, brand;
+ERP USE CASES:
+--------------
+✓ Total sales revenue
+✓ Total payments received
+✓ Total purchase expenses
+✓ Total tax collected
+✓ Total inventory value
 
--- Grouping with aggregates
-SELECT 
-  customer_id,
-  COUNT(*) AS order_count,
-  SUM(amount) AS total_spent,
-  AVG(amount) AS avg_order_value
+RESULT EXAMPLE:
+---------------
+total_revenue
+--------------
+985000.50
+
+============================================================
+6.3 GROUP BY — GROUP ROWS BY A FIELD
+============================================================
+
+QUERY:
+------
+SELECT customer_id, COUNT(*) AS total_orders
 FROM orders
 GROUP BY customer_id;
 
--- Group by date parts
-SELECT 
-  YEAR(order_date) AS year,
-  MONTH(order_date) AS month,
-  SUM(amount) AS monthly_revenue
-FROM orders
-GROUP BY YEAR(order_date), MONTH(order_date);
-```
+MEANING:
+--------
+- Combine rows BY customer_id
+- For each customer: count orders
 
-### 7. HAVING - Filter Grouped Results
-```sql
--- Filter after grouping
-SELECT category, COUNT(*) 
-FROM products 
-GROUP BY category
-HAVING COUNT(*) > 10;
+BEHAVIOR:
+---------
+GROUP BY customer_id produces 1 row per customer:
+customer_id | total_orders
 
--- Multiple conditions
-SELECT customer_id, SUM(amount) AS total_spent
+ERP USE CASES:
+--------------
+✓ Number of orders per customer
+✓ Total items sold per product
+✓ Sales per region
+✓ Payments grouped by method
+✓ Stock movements per warehouse
+
+RESULT EXAMPLE:
+---------------
+customer_id | total_orders
+---------------------------
+1           | 12
+2           | 5
+3           | 0
+
+IMPORTANT:
+----------
+GROUP BY changes the shape of the table:
+- Before GROUP BY: many rows
+- After GROUP BY: one row per group
+
+============================================================
+6.4 HAVING — FILTER AFTER GROUPING
+============================================================
+
+QUERY:
+------
+SELECT customer_id, COUNT(*) AS total_orders
 FROM orders
 GROUP BY customer_id
-HAVING SUM(amount) > 1000 AND COUNT(*) > 5;
+HAVING COUNT(*) > 5;
 
--- HAVING with WHERE
-SELECT category, AVG(price) AS avg_price
-FROM products
-WHERE stock > 0
-GROUP BY category
-HAVING AVG(price) > 100;
-```
+MEANING:
+--------
+- HAVING filters grouped results
+- WHERE cannot be used here because WHERE happens BEFORE GROUPING
+- HAVING happens AFTER GROUPING
 
-### 8. JOINS - Combining Tables
+ERP USE CASES:
+--------------
+✓ Customers with more than 5 orders
+✓ Products with sales > 100 units
+✓ Regions with revenue > 10 lakh
+✓ Suppliers with more than 50 purchase orders
+✓ Employees with > 20 attendance records
 
-#### INNER JOIN
-```sql
--- Basic inner join
-SELECT customers.name, orders.order_id, orders.amount
-FROM customers
-INNER JOIN orders ON customers.customer_id = orders.customer_id;
+RESULT EXAMPLE:
+---------------
+customer_id | total_orders
+---------------------------
+1           | 12
+4           | 9
 
--- Join with aliases
-SELECT c.name, o.order_id, o.amount
-FROM customers c
-INNER JOIN orders o ON c.customer_id = o.customer_id;
+============================================================
+WHERE VS HAVING (CRITICAL DIFFERENCE)
+============================================================
 
--- Multiple joins
-SELECT 
-  c.name,
-  o.order_id,
-  p.product_name,
-  oi.quantity,
-  oi.price
-FROM customers c
-INNER JOIN orders o ON c.customer_id = o.customer_id
-INNER JOIN order_items oi ON o.order_id = oi.order_id
-INNER JOIN products p ON oi.product_id = p.product_id;
-```
+WHERE:
+------
+- Filters BEFORE grouping
+- Cannot use aggregate functions
+- Example: WHERE amount > 1000
 
-#### LEFT JOIN (LEFT OUTER JOIN)
-```sql
--- All customers with their orders (including customers with no orders)
-SELECT c.name, o.order_id, o.amount
-FROM customers c
-LEFT JOIN orders o ON c.customer_id = o.customer_id;
+HAVING:
+-------
+- Filters AFTER grouping
+- Used WITH aggregate functions
+- Example: HAVING SUM(amount) > 10000
 
--- Find customers with no orders
-SELECT c.name
-FROM customers c
-LEFT JOIN orders o ON c.customer_id = o.customer_id
-WHERE o.order_id IS NULL;
-```
+SUMMARY:
+--------
+WHERE → row-level filter
+HAVING → group-level filter
 
-#### RIGHT JOIN (RIGHT OUTER JOIN)
-```sql
--- All orders with customer info
-SELECT c.name, o.order_id, o.amount
-FROM customers c
-RIGHT JOIN orders o ON c.customer_id = o.customer_id;
-```
+============================================================
+ERP-REAL AGGREGATION EXAMPLES
+============================================================
 
-#### FULL OUTER JOIN
-```sql
--- All customers and orders
-SELECT c.name, o.order_id, o.amount
-FROM customers c
-FULL OUTER JOIN orders o ON c.customer_id = o.customer_id;
-```
-
-#### CROSS JOIN
-```sql
--- Cartesian product (all combinations)
-SELECT c.name, p.product_name
-FROM customers c
-CROSS JOIN products p;
-```
-
-#### SELF JOIN
-```sql
--- Find employees and their managers
-SELECT 
-  e1.name AS employee,
-  e2.name AS manager
-FROM employees e1
-LEFT JOIN employees e2 ON e1.manager_id = e2.employee_id;
-```
-
-### 9. Subqueries
-
-#### Scalar Subqueries
-```sql
--- Single value comparison
-SELECT * FROM products
-WHERE price > (SELECT AVG(price) FROM products);
-
--- Subquery in SELECT
-SELECT 
-  product_name,
-  price,
-  (SELECT AVG(price) FROM products) AS avg_price,
-  price - (SELECT AVG(price) FROM products) AS price_difference
-FROM products;
-```
-
-#### Row Subqueries
-```sql
--- IN subquery
-SELECT * FROM customers
-WHERE customer_id IN (
-  SELECT DISTINCT customer_id FROM orders WHERE amount > 500
-);
-
--- NOT IN subquery
-SELECT * FROM products
-WHERE product_id NOT IN (
-  SELECT product_id FROM order_items
-);
-
--- EXISTS subquery
-SELECT * FROM customers c
-WHERE EXISTS (
-  SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id
-);
-
--- NOT EXISTS
-SELECT * FROM customers c
-WHERE NOT EXISTS (
-  SELECT 1 FROM orders o WHERE o.customer_id = c.customer_id
-);
-```
-
-#### Table Subqueries (FROM clause)
-```sql
--- Derived table
-SELECT category, avg_price
-FROM (
-  SELECT category, AVG(price) AS avg_price
-  FROM products
-  GROUP BY category
-) AS category_avg
-WHERE avg_price > 100;
-```
-
-#### Correlated Subqueries
-```sql
--- Subquery references outer query
-SELECT p1.product_name, p1.price
-FROM products p1
-WHERE p1.price > (
-  SELECT AVG(p2.price)
-  FROM products p2
-  WHERE p2.category = p1.category
-);
-```
-
-### 10. UNION - Combining Result Sets
-```sql
--- Combine results (removes duplicates)
-SELECT name, email FROM customers
-UNION
-SELECT name, email FROM suppliers;
-
--- Keep duplicates
-SELECT name FROM customers
-UNION ALL
-SELECT name FROM suppliers;
-
--- With ORDER BY
-SELECT name, 'Customer' AS type FROM customers
-UNION
-SELECT name, 'Supplier' AS type FROM suppliers
-ORDER BY name;
-```
-
-### 11. CASE - Conditional Logic
-```sql
--- Simple CASE
-SELECT 
-  product_name,
-  price,
-  CASE
-    WHEN price < 20 THEN 'Cheap'
-    WHEN price BETWEEN 20 AND 100 THEN 'Moderate'
-    WHEN price > 100 THEN 'Expensive'
-    ELSE 'Unknown'
-  END AS price_category
-FROM products;
-
--- CASE in aggregate
-SELECT 
-  category,
-  SUM(CASE WHEN stock > 0 THEN 1 ELSE 0 END) AS in_stock_count,
-  SUM(CASE WHEN stock = 0 THEN 1 ELSE 0 END) AS out_of_stock_count
-FROM products
-GROUP BY category;
-
--- CASE with ORDER BY
-SELECT * FROM products
-ORDER BY 
-  CASE 
-    WHEN category = 'Electronics' THEN 1
-    WHEN category = 'Books' THEN 2
-    ELSE 3
-  END;
-```
-
-### 12. String Functions
-```sql
--- CONCAT - Combine strings
-SELECT CONCAT(first_name, ' ', last_name) AS full_name FROM customers;
-
--- CONCAT_WS - Concat with separator
-SELECT CONCAT_WS(', ', last_name, first_name) AS full_name FROM customers;
-
--- UPPER/LOWER - Change case
-SELECT UPPER(name) FROM customers;
-SELECT LOWER(email) FROM customers;
-
--- LENGTH/CHAR_LENGTH - String length
-SELECT name, LENGTH(name) AS name_length FROM customers;
-
--- SUBSTRING - Extract substring
-SELECT SUBSTRING(email, 1, 5) FROM customers;
-SELECT SUBSTRING(email FROM 1 FOR 5) FROM customers;  -- PostgreSQL syntax
-
--- LEFT/RIGHT - Extract from start/end
-SELECT LEFT(name, 3) FROM customers;
-SELECT RIGHT(name, 3) FROM customers;
-
--- TRIM - Remove spaces
-SELECT TRIM(name) FROM customers;
-SELECT LTRIM(name) FROM customers;  -- Left trim
-SELECT RTRIM(name) FROM customers;  -- Right trim
-
--- REPLACE - Replace substring
-SELECT REPLACE(email, '@gmail.com', '@company.com') FROM customers;
-
--- POSITION/LOCATE - Find substring position
-SELECT POSITION('@' IN email) FROM customers;  -- PostgreSQL
-SELECT LOCATE('@', email) FROM customers;  -- MySQL
-
--- SPLIT_PART - Split string (PostgreSQL)
-SELECT SPLIT_PART(email, '@', 1) AS username FROM customers;
-```
-
-### 13. Date & Time Functions
-```sql
--- Current date/time
-SELECT NOW();  -- Current date and time
-SELECT CURDATE();  -- Current date
-SELECT CURRENT_DATE;
-SELECT CURTIME();  -- Current time
-SELECT CURRENT_TIMESTAMP;
-
--- Extract parts
-SELECT 
-  YEAR(order_date) AS year,
+1) TOTAL SALES BY MONTH:
+------------------------
+SELECT
   MONTH(order_date) AS month,
-  DAY(order_date) AS day,
-  HOUR(order_time) AS hour,
-  MINUTE(order_time) AS minute
-FROM orders;
-
--- EXTRACT (ANSI SQL)
-SELECT EXTRACT(YEAR FROM order_date) AS year FROM orders;
-SELECT EXTRACT(MONTH FROM order_date) AS month FROM orders;
-
--- Date arithmetic
-SELECT DATE_ADD(order_date, INTERVAL 30 DAY) FROM orders;  -- MySQL
-SELECT DATE_SUB(order_date, INTERVAL 1 MONTH) FROM orders;
-SELECT order_date + INTERVAL '30 days' FROM orders;  -- PostgreSQL
-
--- DATEDIFF - Difference between dates
-SELECT DATEDIFF(NOW(), order_date) AS days_ago FROM orders;  -- MySQL
-SELECT order_date - CURRENT_DATE AS days_ago FROM orders;  -- PostgreSQL
-
--- Format dates
-SELECT DATE_FORMAT(order_date, '%Y-%m-%d') FROM orders;  -- MySQL
-SELECT TO_CHAR(order_date, 'YYYY-MM-DD') FROM orders;  -- PostgreSQL
-
--- Week/Quarter
-SELECT WEEK(order_date) AS week_number FROM orders;
-SELECT QUARTER(order_date) AS quarter FROM orders;
-
--- Day of week
-SELECT DAYOFWEEK(order_date) FROM orders;  -- MySQL (1=Sunday)
-SELECT DAYNAME(order_date) FROM orders;  -- MySQL
-SELECT EXTRACT(DOW FROM order_date) FROM orders;  -- PostgreSQL (0=Sunday)
-
--- Truncate dates
-SELECT DATE_TRUNC('month', order_date) FROM orders;  -- PostgreSQL
-SELECT DATE_FORMAT(order_date, '%Y-%m-01') FROM orders;  -- MySQL (first of month)
-```
-
-### 14. Numeric Functions
-```sql
--- ROUND - Round to decimals
-SELECT ROUND(price, 2) FROM products;
-
--- CEILING/FLOOR - Round up/down
-SELECT CEILING(price) FROM products;
-SELECT FLOOR(price) FROM products;
-
--- ABS - Absolute value
-SELECT ABS(profit) FROM transactions;
-
--- MOD - Modulo (remainder)
-SELECT MOD(quantity, 10) FROM products;
-SELECT quantity % 10 FROM products;  -- Alternative syntax
-
--- POWER/POW - Exponentiation
-SELECT POWER(price, 2) FROM products;
-
--- SQRT - Square root
-SELECT SQRT(area) FROM properties;
-
--- RANDOM - Random number
-SELECT RANDOM() FROM generate_series(1, 10);  -- PostgreSQL
-SELECT RAND() FROM products LIMIT 10;  -- MySQL
-```
-
-### 15. NULL Handling Functions
-```sql
--- COALESCE - Return first non-null value
-SELECT COALESCE(phone, email, 'No contact') FROM customers;
-
--- NULLIF - Return null if equal
-SELECT NULLIF(discount, 0) FROM products;
-
--- IFNULL / NVL - Replace null (MySQL / Oracle)
-SELECT IFNULL(phone, 'N/A') FROM customers;  -- MySQL
-SELECT NVL(phone, 'N/A') FROM customers;  -- Oracle
-
--- CASE for NULL handling
-SELECT 
-  CASE 
-    WHEN phone IS NULL THEN 'No phone'
-    ELSE phone
-  END AS contact_phone
-FROM customers;
-```
-
-### 16. Window Functions (Analytical Functions)
-
-#### ROW_NUMBER, RANK, DENSE_RANK
-```sql
--- ROW_NUMBER - Sequential number
-SELECT 
-  product_name,
-  price,
-  ROW_NUMBER() OVER (ORDER BY price DESC) AS row_num
-FROM products;
-
--- RANK - Rank with gaps
-SELECT 
-  product_name,
-  price,
-  RANK() OVER (ORDER BY price DESC) AS rank
-FROM products;
-
--- DENSE_RANK - Rank without gaps
-SELECT 
-  product_name,
-  price,
-  DENSE_RANK() OVER (ORDER BY price DESC) AS dense_rank
-FROM products;
-
--- Partition by category
-SELECT 
-  category,
-  product_name,
-  price,
-  RANK() OVER (PARTITION BY category ORDER BY price DESC) AS category_rank
-FROM products;
-```
-
-#### Aggregate Window Functions
-```sql
--- Running total
-SELECT 
-  order_date,
-  amount,
-  SUM(amount) OVER (ORDER BY order_date) AS running_total
-FROM orders;
-
--- Moving average
-SELECT 
-  order_date,
-  amount,
-  AVG(amount) OVER (ORDER BY order_date ROWS BETWEEN 6 PRECEDING AND CURRENT ROW) AS moving_avg_7days
-FROM orders;
-
--- Cumulative count
-SELECT 
-  order_date,
-  COUNT(*) OVER (ORDER BY order_date) AS cumulative_orders
-FROM orders;
-```
-
-#### LAG and LEAD
-```sql
--- LAG - Previous row value
-SELECT 
-  order_date,
-  amount,
-  LAG(amount, 1) OVER (ORDER BY order_date) AS previous_amount,
-  amount - LAG(amount, 1) OVER (ORDER BY order_date) AS difference
-FROM orders;
-
--- LEAD - Next row value
-SELECT 
-  order_date,
-  amount,
-  LEAD(amount, 1) OVER (ORDER BY order_date) AS next_amount
-FROM orders;
-```
-
-#### FIRST_VALUE and LAST_VALUE
-```sql
--- First and last values in window
-SELECT 
-  order_date,
-  amount,
-  FIRST_VALUE(amount) OVER (ORDER BY order_date) AS first_order_amount,
-  LAST_VALUE(amount) OVER (ORDER BY order_date ROWS BETWEEN UNBOUNDED PRECEDING AND UNBOUNDED FOLLOWING) AS last_order_amount
-FROM orders;
-```
-
-#### NTILE - Divide into buckets
-```sql
--- Divide into quartiles
-SELECT 
-  product_name,
-  price,
-  NTILE(4) OVER (ORDER BY price) AS price_quartile
-FROM products;
-```
-
-### 17. Common Table Expressions (CTEs)
-```sql
--- Basic CTE
-WITH high_value_customers AS (
-  SELECT 
-    customer_id,
-    SUM(amount) AS total_spent
-  FROM orders
-  GROUP BY customer_id
-  HAVING SUM(amount) > 1000
-)
-SELECT c.name, hvc.total_spent
-FROM customers c
-INNER JOIN high_value_customers hvc ON c.customer_id = hvc.customer_id;
-
--- Multiple CTEs
-WITH 
-  monthly_sales AS (
-    SELECT 
-      DATE_TRUNC('month', order_date) AS month,
-      SUM(amount) AS total_sales
-    FROM orders
-    GROUP BY DATE_TRUNC('month', order_date)
-  ),
-  avg_monthly AS (
-    SELECT AVG(total_sales) AS avg_sales
-    FROM monthly_sales
-  )
-SELECT ms.month, ms.total_sales, am.avg_sales
-FROM monthly_sales ms
-CROSS JOIN avg_monthly am
-WHERE ms.total_sales > am.avg_sales;
-
--- Recursive CTE (hierarchical data)
-WITH RECURSIVE employee_hierarchy AS (
-  -- Base case
-  SELECT employee_id, name, manager_id, 1 AS level
-  FROM employees
-  WHERE manager_id IS NULL
-  
-  UNION ALL
-  
-  -- Recursive case
-  SELECT e.employee_id, e.name, e.manager_id, eh.level + 1
-  FROM employees e
-  INNER JOIN employee_hierarchy eh ON e.manager_id = eh.employee_id
-)
-SELECT * FROM employee_hierarchy;
-```
-
-### 18. INSERT - Adding Data
-```sql
--- Insert single row
-INSERT INTO customers (name, email, city)
-VALUES ('John Doe', 'john@example.com', 'New York');
-
--- Insert multiple rows
-INSERT INTO customers (name, email, city)
-VALUES 
-  ('Jane Smith', 'jane@example.com', 'Los Angeles'),
-  ('Bob Johnson', 'bob@example.com', 'Chicago'),
-  ('Alice Brown', 'alice@example.com', 'Houston');
-
--- Insert from SELECT
-INSERT INTO archived_orders (order_id, customer_id, amount)
-SELECT order_id, customer_id, amount
+  SUM(amount) AS total_sales
 FROM orders
-WHERE order_date < '2020-01-01';
+GROUP BY MONTH(order_date);
 
--- Insert with default values
-INSERT INTO products (name, category)
-VALUES ('New Product', 'Electronics');  -- Other columns use defaults
-```
+2) TOTAL ORDERS PER CITY:
+-------------------------
+SELECT c.city, COUNT(o.id) AS order_count
+FROM customers c
+LEFT JOIN orders o ON o.customer_id = c.id
+GROUP BY c.city;
 
-### 19. UPDATE - Modifying Data
-```sql
--- Basic update
-UPDATE customers
-SET email = 'newemail@example.com'
-WHERE customer_id = 1;
+3) LOW STOCK ALERT:
+-------------------
+SELECT product_id, SUM(quantity) AS total_stock
+FROM stock_movements
+GROUP BY product_id
+HAVING SUM(quantity) < 10;
 
--- Update multiple columns
-UPDATE products
-SET price = 99.99, stock = 50, updated_at = NOW()
-WHERE product_id = 10;
+4) TOP 5 CUSTOMERS BY REVENUE:
+-------------------------------
+SELECT c.name, SUM(o.amount) AS revenue
+FROM customers c
+JOIN orders o ON o.customer_id = c.id
+GROUP BY c.id
+ORDER BY revenue DESC
+LIMIT 5;
 
--- Update with calculation
-UPDATE products
-SET price = price * 1.1  -- 10% increase
-WHERE category = 'Electronics';
+============================================================
+AGGREGATION SUMMARY
+============================================================
 
--- Update from another table (using JOIN)
-UPDATE products p
-INNER JOIN categories c ON p.category_id = c.category_id
-SET p.discount = c.standard_discount
-WHERE c.name = 'Clearance';
+COUNT()     → how many rows
+SUM()       → total amount
+AVG()       → average
+MIN()       → smallest
+MAX()       → largest
 
--- Conditional update with CASE
-UPDATE products
-SET status = CASE
-  WHEN stock = 0 THEN 'Out of Stock'
-  WHEN stock < 10 THEN 'Low Stock'
-  ELSE 'Available'
-END;
-```
+GROUP BY    → group rows into buckets
+HAVING      → filter buckets after grouping
 
-### 20. DELETE - Removing Data
-```sql
--- Delete specific rows
-DELETE FROM customers WHERE customer_id = 5;
 
--- Delete with condition
-DELETE FROM orders WHERE order_date < '2020-01-01';
+============================================================
+7. USERS & PERMISSIONS (BASIC MySQL ADMIN)
+============================================================
 
--- Delete using subquery
-DELETE FROM products
-WHERE product_id IN (
-  SELECT product_id FROM discontinued_products
-);
+-- 7.1 Create a new SQL user
+CREATE USER 'app_user'@'%' IDENTIFIED BY 'StrongPassword123';
 
--- Delete all rows (keep structure)
-DELETE FROM temp_table;
+-- 7.2 Grant privileges on a database
+GRANT ALL PRIVILEGES
+ON erp_db.*
+TO 'app_user'@'%';
 
--- TRUNCATE (faster, resets auto-increment)
-TRUNCATE TABLE temp_table;
-```
+-- Or more restrictive:
+GRANT SELECT, INSERT, UPDATE, DELETE
+ON erp_db.*
+TO 'app_user'@'%';
 
-### 21. CREATE TABLE - Table Creation
-```sql
--- Basic table creation
+-- 7.3 Apply changes
+FLUSH PRIVILEGES;
+
+-- 7.4 Revoke privileges
+REVOKE INSERT, UPDATE
+ON erp_db.*
+FROM 'app_user'@'%';
+
+-- 7.5 Drop user
+DROP USER 'app_user'@'%';
+
+
+============================================================
+8. END-TO-END EXAMPLE: CREATE A SMALL DB & USE IT
+============================================================
+
+-- Step 1: Create DB and switch to it
+CREATE DATABASE shop_db
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+
+USE shop_db;
+
+-- Step 2: Create tables
 CREATE TABLE customers (
-  customer_id INT PRIMARY KEY AUTO_INCREMENT,
-  first_name VARCHAR(50) NOT NULL,
-  last_name VARCHAR(50) NOT NULL,
-  email VARCHAR(100) UNIQUE,
-  phone VARCHAR(20),
-  city VARCHAR(50),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    name         VARCHAR(100) NOT NULL,
+    email        VARCHAR(100) UNIQUE,
+    city         VARCHAR(100)
 );
 
--- Table with foreign key
 CREATE TABLE orders (
-  order_id INT PRIMARY KEY AUTO_INCREMENT,
-  customer_id INT NOT NULL,
-  order_date DATE NOT NULL,
-  amount DECIMAL(10, 2) NOT NULL,
-  status VARCHAR(20) DEFAULT 'Pending',
-  FOREIGN KEY (customer_id) REFERENCES customers(customer_id) ON DELETE CASCADE
+    id           INT AUTO_INCREMENT PRIMARY KEY,
+    customer_id  INT,
+    order_date   DATE,
+    amount       DECIMAL(10,2),
+    CONSTRAINT fk_orders_customer
+      FOREIGN KEY (customer_id) REFERENCES customers(id)
 );
 
--- Table with check constraint
-CREATE TABLE products (
-  product_id INT PRIMARY KEY AUTO_INCREMENT,
-  name VARCHAR(100) NOT NULL,
-  price DECIMAL(10, 2) NOT NULL CHECK (price > 0),
-  stock INT DEFAULT 0 CHECK (stock >= 0),
-  category VARCHAR(50)
-);
+-- Step 3: Insert sample data
+INSERT INTO customers (name, email, city)
+VALUES
+  ('Jimmy', 'jimmy@example.com', 'Erlangen'),
+  ('Alice', 'alice@example.com', 'Mumbai');
 
--- Create table from query
-CREATE TABLE high_value_customers AS
-SELECT customer_id, name, total_spent
-FROM (
-  SELECT c.customer_id, c.name, SUM(o.amount) AS total_spent
-  FROM customers c
-  INNER JOIN orders o ON c.customer_id = o.customer_id
-  GROUP BY c.customer_id, c.name
-  HAVING SUM(o.amount) > 1000
-) AS subquery;
-```
+INSERT INTO orders (customer_id, order_date, amount)
+VALUES
+  (1, '2025-01-01', 2500.00),
+  (1, '2025-01-10', 1200.00),
+  (2, '2025-01-05', 5000.00);
 
-### 22. ALTER TABLE - Modifying Tables
-```sql
--- Add column
-ALTER TABLE customers ADD COLUMN age INT;
-
--- Drop column
-ALTER TABLE customers DROP COLUMN age;
-
--- Modify column datatype
-ALTER TABLE customers MODIFY COLUMN email VARCHAR(150);
-
--- Rename column
-ALTER TABLE customers RENAME COLUMN phone TO phone_number;
-
--- Add constraint
-ALTER TABLE customers ADD CONSTRAINT unique_email UNIQUE (email);
-
--- Drop constraint
-ALTER TABLE customers DROP CONSTRAINT unique_email;
-
--- Add foreign key
-ALTER TABLE orders 
-ADD CONSTRAINT fk_customer 
-FOREIGN KEY (customer_id) REFERENCES customers(customer_id);
-
--- Rename table
-ALTER TABLE customers RENAME TO clients;
-```
-
-### 23. DROP & TRUNCATE
-```sql
--- Drop table (delete completely)
-DROP TABLE IF EXISTS temp_table;
-
--- Truncate table (delete all data, keep structure)
-TRUNCATE TABLE temp_table;
-
--- Drop database
-DROP DATABASE IF EXISTS test_db;
-```
-
-### 24. INDEXES - Performance Optimization
-```sql
--- Create index
-CREATE INDEX idx_email ON customers(email);
-
--- Create composite index
-CREATE INDEX idx_name ON customers(last_name, first_name);
-
--- Create unique index
-CREATE UNIQUE INDEX idx_unique_email ON customers(email);
-
--- Drop index
-DROP INDEX idx_email ON customers;
-
--- Show indexes
-SHOW INDEX FROM customers;  -- MySQL
-SELECT * FROM pg_indexes WHERE tablename = 'customers';  -- PostgreSQL
-```
-
-### 25. VIEWS - Virtual Tables
-```sql
--- Create view
-CREATE VIEW customer_orders AS
-SELECT 
-  c.customer_id,
-  c.name,
-  c.email,
-  o.order_id,
+-- Step 4: Query joined data
+SELECT
+  c.name  AS customer,
+  o.id    AS order_id,
   o.order_date,
   o.amount
 FROM customers c
-LEFT JOIN orders o ON c.customer_id = o.customer_id;
+JOIN orders o ON o.customer_id = c.id
+ORDER BY c.name, o.order_date;
 
--- Use view
-SELECT * FROM customer_orders WHERE amount > 100;
-
--- Create or replace view
-CREATE OR REPLACE VIEW customer_orders AS
-SELECT 
-  c.customer_id,
-  c.name,
-  o.order_id,
-  o.amount
+-- Step 5: Simple report – total amount per customer
+SELECT
+  c.name               AS customer,
+  COUNT(o.id)          AS total_orders,
+  SUM(o.amount)        AS total_spent
 FROM customers c
-LEFT JOIN orders o ON c.customer_id = o.customer_id;
-
--- Drop view
-DROP VIEW customer_orders;
-
--- Materialized view (PostgreSQL)
-CREATE MATERIALIZED VIEW monthly_sales AS
-SELECT 
-  DATE_TRUNC('month', order_date) AS month,
-  SUM(amount) AS total_sales
-FROM orders
-GROUP BY DATE_TRUNC('month', order_date);
-
--- Refresh materialized view
-REFRESH MATERIALIZED VIEW monthly_sales;
-```
-
-### 26. TRANSACTIONS - Data Integrity
-```sql
--- Start transaction
-START TRANSACTION;  -- or BEGIN;
-
--- Execute queries
-UPDATE accounts SET balance = balance - 100 WHERE account_id = 1;
-UPDATE accounts SET balance = balance + 100 WHERE account_id = 2;
-
--- Commit if successful
-COMMIT;
-
--- Rollback if error
-ROLLBACK;
-
--- Transaction with savepoint
-START TRANSACTION;
-UPDATE products SET price = price * 1.1;
-SAVEPOINT price_increase;
-UPDATE products SET stock = 0 WHERE stock < 5;
-ROLLBACK TO SAVEPOINT price_increase;  -- Undo stock update only
-COMMIT;
-```
-
-### 27. Data Analysis Patterns
-
-#### Cohort Analysis
-```sql
-WITH user_cohorts AS (
-  SELECT 
-    user_id,
-    DATE_TRUNC('month', MIN(signup_date)) AS cohort_month
-  FROM users
-  GROUP BY user_id
-),
-user_activities AS (
-  SELECT 
-    uc.cohort_month,
-    DATE_TRUNC('month', a.activity_date) AS activity_month,
-    COUNT(DISTINCT a.user_id) AS active_users
-  FROM user_cohorts uc
-  INNER JOIN activities a ON uc.user_id = a.user_id
-  GROUP BY uc.cohort_month, DATE_TRUNC('month', a.activity_date)
-)
-SELECT 
-  cohort_month,
-  activity_month,
-  active_users,
-  ROUND(100.0 * active_users / FIRST_VALUE(active_users) OVER (PARTITION BY cohort_month ORDER BY activity_month), 2) AS retention_rate
-FROM user_activities
-ORDER BY cohort_month, activity_month;
-```
-
-#### RFM Analysis (Recency, Frequency, Monetary)
-```sql
-WITH rfm_calc AS (
-  SELECT 
-    customer_id,
-    DATEDIFF(CURRENT_DATE, MAX(order_date)) AS recency,
-    COUNT(*) AS frequency,
-    SUM(amount) AS monetary
-  FROM orders
-  WHERE order_date >= DATE_SUB(CURRENT_DATE, INTERVAL 1 YEAR)
-  GROUP BY customer_id
-),
-rfm_scores AS (
-  SELECT 
-    customer_id,
-    recency,
-    frequency,
-    monetary,
-    NTILE(5) OVER (ORDER BY recency DESC) AS r_score,
-    NTILE(5) OVER (ORDER BY frequency ASC) AS f_score,
-    NTILE(5) OVER (ORDER BY monetary ASC) AS m_score
-  FROM rfm_calc
-)
-SELECT 
-  customer_id,
-  CONCAT(r_score, f_score, m_score) AS rfm_score,
-  CASE
-    WHEN r_score >= 4 AND f_score >= 4 THEN 'Champions'
-    WHEN r_score >= 3 AND f_score >= 3 THEN 'Loyal Customers'
-    WHEN r_score >= 4 AND f_score <= 2 THEN 'Promising'
-    WHEN r_score <= 2 AND f_score >= 3 THEN 'At Risk'
-    ELSE 'Other'
-  END AS customer_segment
-FROM rfm_scores;
-```
-
-#### Time Series Analysis
-```sql
--- Daily sales with moving average
-SELECT 
-  order_date,
-  SUM(amount) AS daily_sales,
-  AVG(SUM(amount)) OVER (
-    ORDER BY order_date 
-    ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
-  ) AS moving_avg_7days,
-  SUM(SUM(amount)) OVER (
-    PARTITION BY YEAR(order_date), MONTH(order_date)
-    ORDER BY order_date
-  ) AS month_to_date
-FROM orders
-GROUP BY order_date
-ORDER BY order_date;
-```
-
-#### Funnel Analysis
-```sql
-WITH funnel_steps AS (
-  SELECT 
-    user_id,
-    MAX(CASE WHEN event_type = 'page_view' THEN 1 ELSE 0 END) AS viewed,
-    MAX(CASE WHEN event_type = 'add_to_cart' THEN 1 ELSE 0 END) AS added_to_cart,
-    MAX(CASE WHEN event_type = 'checkout' THEN 1 ELSE 0 END) AS checked_out,
-    MAX(CASE WHEN event_type = 'purchase' THEN 1 ELSE 0 END) AS purchased
-  FROM events
-  GROUP BY user_id
-)
-SELECT 
-  SUM(viewed) AS total_views,
-  SUM(added_to_cart) AS total_add_to_cart,
-  SUM(checked_out) AS total_checkout,
-  SUM(purchased) AS total_purchase,
-  ROUND(100.0 * SUM(added_to_cart) / SUM(viewed), 2) AS cart_conversion,
-  ROUND(100.0 * SUM(checked_out) / SUM(added_to_cart), 2) AS checkout_conversion,
-  ROUND(100.0 * SUM(purchased) / SUM(checked_out), 2) AS purchase_conversion
-FROM funnel_steps;
-```
-
-#### Pivot Tables (Manual)
-```sql
--- Sales by category and quarter
-SELECT 
-  category,
-  SUM(CASE WHEN QUARTER(order_date) = 1 THEN amount ELSE 0 END) AS Q1,
-  SUM(CASE WHEN QUARTER(order_date) = 2 THEN amount ELSE 0 END) AS Q2,
-  SUM(CASE WHEN QUARTER(order_date) = 3 THEN amount ELSE 0 END) AS Q3,
-  SUM(CASE WHEN QUARTER(order_date) = 4 THEN amount ELSE 0 END) AS Q4,
-  SUM(amount) AS total
-FROM orders o
-INNER JOIN order_items oi ON o.order_id = oi.order_id
-INNER JOIN products p ON oi.product_id = p.product_id
-WHERE YEAR(order_date) = 2024
-GROUP BY category;
-```
-
-### 28. Performance Optimization Queries
-
-#### EXPLAIN - Query Analysis
-```sql
--- Analyze query execution plan
-EXPLAIN SELECT * FROM orders WHERE customer_id = 100;
-
--- Detailed analysis
-EXPLAIN ANALYZE SELECT * FROM orders WHERE customer_id = 100;
-```
-
-#### Index Usage Check
-```sql
--- Show indexes
-SHOW INDEX FROM orders;
-
--- Find unused indexes (MySQL)
-SELECT * FROM sys.schema_unused_indexes;
-
--- Find duplicate indexes (MySQL)
-SELECT * FROM sys.schema_redundant_indexes;
-```
-
-## Essential Data Types
-
-### Numeric Types
-- **INT / INTEGER**: Whole numbers (-2,147,483,648 to 2,147,483,647)
-- **BIGINT**: Large integers (-9,223,372,036,854,775,808 to 9,223,372,036,854,775,807)
-- **SMALLINT**: Small integers (-32,768 to 32,767)
-- **TINYINT**: Very small integers (0 to 255 or -128 to 127)
-- **DECIMAL(p,s) / NUMERIC(p,s)**: Fixed-point numbers (p=precision, s=scale)
-- **FLOAT / REAL**: Approximate floating-point numbers
-- **DOUBLE**: Double-precision floating-point numbers
-
-### String Types
-- **VARCHAR(n)**: Variable-length string (max n characters)
-- **CHAR(n)**: Fixed-length string (exactly n characters)
-- **TEXT**: Long text (up to 65,535 characters)
-- **MEDIUMTEXT**: Medium text (up to 16,777,215 characters)
-- **LONGTEXT**: Very long text (up to 4,294,967,295 characters)
-
-### Date and Time Types
-- **DATE**: Date (YYYY-MM-DD)
-- **TIME**: Time (HH:MM:SS)
-- **DATETIME**: Date and time (YYYY-MM-DD HH:MM:SS)
-- **TIMESTAMP**: Unix timestamp
-- **YEAR**: Year (YYYY)
-
-### Other Types
-- **BOOLEAN / BOOL**: True/False (stored as TINYINT(1))
-- **BLOB**: Binary large object
-- **JSON**: JSON data (MySQL 5.7+, PostgreSQL 9.2+)
-- **ENUM**: Enumerated values
-- **SET**: Set of values
-
-## Common Data Analysis Queries
-
-### 1. Descriptive Statistics
-```sql
-SELECT 
-  COUNT(*) AS total_records,
-  COUNT(DISTINCT customer_id) AS unique_customers,
-  MIN(order_date) AS first_order,
-  MAX(order_date) AS last_order,
-  SUM(amount) AS total_revenue,
-  AVG(amount) AS avg_order_value,
-  STDDEV(amount) AS std_deviation,
-  VARIANCE(amount) AS variance,
-  PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY amount) AS median  -- PostgreSQL
-FROM orders;
-```
-
-### 2. Growth Metrics (YoY, MoM)
-```sql
-WITH monthly_revenue AS (
-  SELECT 
-    DATE_TRUNC('month', order_date) AS month,
-    SUM(amount) AS revenue
-  FROM orders
-  GROUP BY DATE_TRUNC('month', order_date)
-)
-SELECT 
-  month,
-  revenue,
-  LAG(revenue, 1) OVER (ORDER BY month) AS prev_month_revenue,
-  LAG(revenue, 12) OVER (ORDER BY month) AS prev_year_revenue,
-  ROUND(100.0 * (revenue - LAG(revenue, 1) OVER (ORDER BY month)) / LAG(revenue, 1) OVER (ORDER BY month), 2) AS mom_growth,
-  ROUND(100.0 * (revenue - LAG(revenue, 12) OVER (ORDER BY month)) / LAG(revenue, 12) OVER (ORDER BY month), 2) AS yoy_growth
-FROM monthly_revenue
-ORDER BY month;
-```
-
-### 3. Customer Lifetime Value (CLV)
-```sql
-SELECT 
-  customer_id,
-  COUNT(*) AS total_orders,
-  SUM(amount) AS total_spent,
-  AVG(amount) AS avg_order_value,
-  MIN(order_date) AS first_order_date,
-  MAX(order_date) AS last_order_date,
-  DATEDIFF(MAX(order_date), MIN(order_date)) AS customer_lifespan_days,
-  CASE 
-    WHEN COUNT(*) > 1 
-    THEN DATEDIFF(MAX(order_date), MIN(order_date)) / (COUNT(*) - 1)
-    ELSE NULL 
-  END AS avg_days_between_orders
-FROM orders
-GROUP BY customer_id
-HAVING COUNT(*) >= 2;
-```
-
-### 4. Churn Analysis
-```sql
-WITH customer_activity AS (
-  SELECT 
-    customer_id,
-    MAX(order_date) AS last_order_date,
-    COUNT(*) AS total_orders,
-    DATEDIFF(CURRENT_DATE, MAX(order_date)) AS days_since_last_order
-  FROM orders
-  GROUP BY customer_id
-)
-SELECT 
-  CASE 
-    WHEN days_since_last_order <= 30 THEN 'Active'
-    WHEN days_since_last_order <= 90 THEN 'At Risk'
-    WHEN days_since_last_order <= 180 THEN 'Dormant'
-    ELSE 'Churned'
-  END AS customer_status,
-  COUNT(*) AS customer_count,
-  ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (), 2) AS percentage
-FROM customer_activity
-GROUP BY 
-  CASE 
-    WHEN days_since_last_order <= 30 THEN 'Active'
-    WHEN days_since_last_order <= 90 THEN 'At Risk'
-    WHEN days_since_last_order <= 180 THEN 'Dormant'
-    ELSE 'Churned'
-  END;
-```
-
-### 5. Product Performance Analysis
-```sql
-SELECT 
-  p.product_id,
-  p.product_name,
-  p.category,
-  COUNT(DISTINCT o.order_id) AS times_ordered,
-  SUM(oi.quantity) AS total_quantity_sold,
-  SUM(oi.quantity * oi.price) AS total_revenue,
-  AVG(oi.price) AS avg_selling_price,
-  RANK() OVER (ORDER BY SUM(oi.quantity * oi.price) DESC) AS revenue_rank,
-  RANK() OVER (PARTITION BY p.category ORDER BY SUM(oi.quantity * oi.price) DESC) AS category_rank
-FROM products p
-LEFT JOIN order_items oi ON p.product_id = oi.product_id
-LEFT JOIN orders o ON oi.order_id = o.order_id
-GROUP BY p.product_id, p.product_name, p.category
-ORDER BY total_revenue DESC;
-```
-
-### 6. ABC Analysis (Pareto Principle)
-```sql
-WITH product_revenue AS (
-  SELECT 
-    product_id,
-    SUM(quantity * price) AS revenue
-  FROM order_items
-  GROUP BY product_id
-),
-revenue_cumulative AS (
-  SELECT 
-    product_id,
-    revenue,
-    SUM(revenue) OVER (ORDER BY revenue DESC) AS cumulative_revenue,
-    SUM(revenue) OVER () AS total_revenue
-  FROM product_revenue
-)
-SELECT 
-  product_id,
-  revenue,
-  ROUND(100.0 * cumulative_revenue / total_revenue, 2) AS cumulative_percentage,
-  CASE 
-    WHEN 100.0 * cumulative_revenue / total_revenue <= 80 THEN 'A'
-    WHEN 100.0 * cumulative_revenue / total_revenue <= 95 THEN 'B'
-    ELSE 'C'
-  END AS abc_category
-FROM revenue_cumulative
-ORDER BY revenue DESC;
-```
-
-### 7. Market Basket Analysis
-```sql
--- Find frequently bought together products
-SELECT 
-  oi1.product_id AS product_a,
-  oi2.product_id AS product_b,
-  COUNT(DISTINCT oi1.order_id) AS times_bought_together,
-  ROUND(100.0 * COUNT(DISTINCT oi1.order_id) / (SELECT COUNT(DISTINCT order_id) FROM order_items), 2) AS support_percentage
-FROM order_items oi1
-INNER JOIN order_items oi2 
-  ON oi1.order_id = oi2.order_id 
-  AND oi1.product_id < oi2.product_id
-GROUP BY oi1.product_id, oi2.product_id
-HAVING COUNT(DISTINCT oi1.order_id) >= 10
-ORDER BY times_bought_together DESC
-LIMIT 20;
-```
-
-### 8. Customer Segmentation
-```sql
-WITH customer_metrics AS (
-  SELECT 
-    customer_id,
-    COUNT(*) AS order_count,
-    SUM(amount) AS total_spent,
-    AVG(amount) AS avg_order_value,
-    DATEDIFF(CURRENT_DATE, MAX(order_date)) AS days_since_last_order
-  FROM orders
-  GROUP BY customer_id
-)
-SELECT 
-  CASE 
-    WHEN total_spent >= 5000 AND order_count >= 10 THEN 'VIP'
-    WHEN total_spent >= 2000 AND order_count >= 5 THEN 'High Value'
-    WHEN total_spent >= 500 AND order_count >= 2 THEN 'Medium Value'
-    WHEN order_count = 1 THEN 'One-time'
-    ELSE 'Low Value'
-  END AS customer_segment,
-  COUNT(*) AS customer_count,
-  ROUND(AVG(total_spent), 2) AS avg_total_spent,
-  ROUND(AVG(order_count), 2) AS avg_order_count
-FROM customer_metrics
-GROUP BY 
-  CASE 
-    WHEN total_spent >= 5000 AND order_count >= 10 THEN 'VIP'
-    WHEN total_spent >= 2000 AND order_count >= 5 THEN 'High Value'
-    WHEN total_spent >= 500 AND order_count >= 2 THEN 'Medium Value'
-    WHEN order_count = 1 THEN 'One-time'
-    ELSE 'Low Value'
-  END
-ORDER BY avg_total_spent DESC;
-```
-
-### 9. Conversion Rate Analysis
-```sql
-WITH user_funnel AS (
-  SELECT 
-    user_id,
-    MAX(CASE WHEN event_type = 'visit' THEN 1 ELSE 0 END) AS visited,
-    MAX(CASE WHEN event_type = 'signup' THEN 1 ELSE 0 END) AS signed_up,
-    MAX(CASE WHEN event_type = 'first_purchase' THEN 1 ELSE 0 END) AS purchased
-  FROM user_events
-  GROUP BY user_id
-)
-SELECT 
-  COUNT(*) AS total_visitors,
-  SUM(signed_up) AS total_signups,
-  SUM(purchased) AS total_purchases,
-  ROUND(100.0 * SUM(signed_up) / COUNT(*), 2) AS signup_rate,
-  ROUND(100.0 * SUM(purchased) / SUM(signed_up), 2) AS purchase_rate,
-  ROUND(100.0 * SUM(purchased) / COUNT(*), 2) AS overall_conversion_rate
-FROM user_funnel;
-```
-
-### 10. Seasonality Analysis
-```sql
-SELECT 
-  YEAR(order_date) AS year,
-  MONTH(order_date) AS month,
-  DAYNAME(order_date) AS day_of_week,
-  COUNT(*) AS order_count,
-  SUM(amount) AS total_revenue,
-  AVG(amount) AS avg_order_value
-FROM orders
-GROUP BY 
-  YEAR(order_date),
-  MONTH(order_date),
-  DAYNAME(order_date)
-ORDER BY year, month, 
-  CASE DAYNAME(order_date)
-    WHEN 'Monday' THEN 1
-    WHEN 'Tuesday' THEN 2
-    WHEN 'Wednesday' THEN 3
-    WHEN 'Thursday' THEN 4
-    WHEN 'Friday' THEN 5
-    WHEN 'Saturday' THEN 6
-    WHEN 'Sunday' THEN 7
-  END;
-```
-
-## Advanced SQL Techniques for Data Analysts
-
-### 1. Handling Duplicates
-```sql
--- Find duplicates
-SELECT email, COUNT(*)
-FROM customers
-GROUP BY email
-HAVING COUNT(*) > 1;
-
--- Remove duplicates (keep first occurrence)
-DELETE c1 FROM customers c1
-INNER JOIN customers c2 
-WHERE c1.customer_id > c2.customer_id 
-AND c1.email = c2.email;
-
--- Using ROW_NUMBER to identify duplicates
-WITH ranked_customers AS (
-  SELECT *,
-    ROW_NUMBER() OVER (PARTITION BY email ORDER BY customer_id) AS rn
-  FROM customers
-)
-DELETE FROM customers
-WHERE customer_id IN (
-  SELECT customer_id FROM ranked_customers WHERE rn > 1
-);
-```
-
-### 2. Data Quality Checks
-```sql
--- Check for NULL values
-SELECT 
-  COUNT(*) AS total_rows,
-  COUNT(email) AS email_count,
-  COUNT(*) - COUNT(email) AS email_nulls,
-  COUNT(phone) AS phone_count,
-  COUNT(*) - COUNT(phone) AS phone_nulls
-FROM customers;
-
--- Check for outliers
-SELECT *
-FROM orders
-WHERE amount > (SELECT AVG(amount) + 3 * STDDEV(amount) FROM orders)
-   OR amount < (SELECT AVG(amount) - 3 * STDDEV(amount) FROM orders);
-
--- Check data ranges
-SELECT 
-  MIN(order_date) AS earliest_date,
-  MAX(order_date) AS latest_date,
-  MIN(amount) AS min_amount,
-  MAX(amount) AS max_amount
-FROM orders
-WHERE order_date < '1900-01-01' OR order_date > CURRENT_DATE;
-```
-
-### 3. Text Analysis
-```sql
--- Word frequency analysis
-SELECT 
-  SUBSTRING_INDEX(SUBSTRING_INDEX(description, ' ', n.n), ' ', -1) AS word,
-  COUNT(*) AS frequency
-FROM products
-CROSS JOIN (
-  SELECT 1 AS n UNION SELECT 2 UNION SELECT 3 UNION SELECT 4 UNION SELECT 5
-) n
-WHERE CHAR_LENGTH(description) - CHAR_LENGTH(REPLACE(description, ' ', '')) >= n.n - 1
-GROUP BY word
-ORDER BY frequency DESC
-LIMIT 20;
-
--- Extract domain from email
-SELECT 
-  SUBSTRING(email, POSITION('@' IN email) + 1) AS domain,
-  COUNT(*) AS customer_count
-FROM customers
-GROUP BY SUBSTRING(email, POSITION('@' IN email) + 1)
-ORDER BY customer_count DESC;
-```
-
-### 4. Running Calculations
-```sql
--- Running total by category
-SELECT 
-  order_date,
-  category,
-  amount,
-  SUM(amount) OVER (
-    PARTITION BY category 
-    ORDER BY order_date
-    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-  ) AS running_total
-FROM orders o
-INNER JOIN order_items oi ON o.order_id = oi.order_id
-INNER JOIN products p ON oi.product_id = p.product_id;
-
--- Percent of total
-SELECT 
-  category,
-  SUM(amount) AS category_revenue,
-  ROUND(100.0 * SUM(amount) / SUM(SUM(amount)) OVER (), 2) AS percent_of_total
-FROM orders o
-INNER JOIN order_items oi ON o.order_id = oi.order_id
-INNER JOIN products p ON oi.product_id = p.product_id
-GROUP BY category;
-```
-
-### 5. Date Range Queries
-```sql
--- Last 7 days
-SELECT * FROM orders 
-WHERE order_date >= CURRENT_DATE - INTERVAL 7 DAY;
-
--- Last 30 days
-SELECT * FROM orders 
-WHERE order_date >= CURRENT_DATE - INTERVAL 30 DAY;
-
--- Current month
-SELECT * FROM orders 
-WHERE YEAR(order_date) = YEAR(CURRENT_DATE)
-  AND MONTH(order_date) = MONTH(CURRENT_DATE);
-
--- Previous month
-SELECT * FROM orders 
-WHERE order_date >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL 1 MONTH
-  AND order_date < DATE_TRUNC('month', CURRENT_DATE);
-
--- Year to date
-SELECT * FROM orders 
-WHERE YEAR(order_date) = YEAR(CURRENT_DATE);
-
--- Same period last year
-SELECT * FROM orders 
-WHERE order_date BETWEEN 
-  DATE_SUB(CURRENT_DATE, INTERVAL 1 YEAR) 
-  AND DATE_SUB(CURRENT_DATE, INTERVAL 1 YEAR) + INTERVAL 30 DAY;
-```
-
-## SQL Best Practices for Data Analysts
-
-### 1. Query Optimization
-- Use indexes on frequently queried columns
-- Avoid SELECT *, specify only needed columns
-- Use WHERE before JOIN when possible
-- Limit result sets with WHERE, LIMIT
-- Use EXPLAIN to analyze query performance
-- Avoid functions on indexed columns in WHERE clause
-- Use UNION ALL instead of UNION when duplicates don't matter
-
-### 2. Code Readability
-- Use meaningful aliases
-- Indent SQL for readability
-- Use uppercase for SQL keywords
-- Comment complex queries
-- Break long queries into CTEs
-- Use consistent naming conventions
-
-### 3. Data Integrity
-- Always use WHERE clause with UPDATE/DELETE
-- Test queries with SELECT before UPDATE/DELETE
-- Use transactions for multiple related operations
-- Backup data before major operations
-- Validate data after imports
-
-### 4. Common Pitfalls to Avoid
-- Forgetting WHERE clause in UPDATE/DELETE
-- Not handling NULL values properly
-- Using != instead of IS NOT NULL
-- Cartesian products from missing JOIN conditions
-- Not considering data types in comparisons
-- Forgetting time zones in date comparisons
-
-## Database-Specific Syntax Differences
-
-### MySQL vs PostgreSQL vs SQL Server
-
-```sql
--- LIMIT (Pagination)
--- MySQL/PostgreSQL:
-SELECT * FROM orders LIMIT 10 OFFSET 20;
--- SQL Server:
-SELECT * FROM orders ORDER BY order_id OFFSET 20 ROWS FETCH NEXT 10 ROWS ONLY;
-
--- String concatenation
--- MySQL:
-SELECT CONCAT(first_name, ' ', last_name) FROM customers;
--- PostgreSQL:
-SELECT first_name || ' ' || last_name FROM customers;
--- SQL Server:
-SELECT first_name + ' ' + last_name FROM customers;
-
--- Date functions
--- MySQL:
-SELECT NOW(), CURDATE(), DATE_ADD(order_date, INTERVAL 30 DAY);
--- PostgreSQL:
-SELECT NOW(), CURRENT_DATE, order_date + INTERVAL '30 days';
--- SQL Server:
-SELECT GETDATE(), CAST(GETDATE() AS DATE), DATEADD(day, 30, order_date);
-
--- Auto-increment
--- MySQL:
-CREATE TABLE customers (id INT AUTO_INCREMENT PRIMARY KEY);
--- PostgreSQL:
-CREATE TABLE customers (id SERIAL PRIMARY KEY);
--- SQL Server:
-CREATE TABLE customers (id INT IDENTITY(1,1) PRIMARY KEY);
-
--- Top N records
--- MySQL/PostgreSQL:
-SELECT * FROM orders ORDER BY amount DESC LIMIT 10;
--- SQL Server:
-SELECT TOP 10 * FROM orders ORDER BY amount DESC;
-```
-
-## Essential Tools & Resources for Data Analysts
-
-### Database Clients
-- **DBeaver** - Universal database tool (free)
-- **DataGrip** - JetBrains SQL IDE (paid)
-- **MySQL Workbench** - MySQL GUI (free)
-- **pgAdmin** - PostgreSQL GUI (free)
-- **Azure Data Studio** - Microsoft SQL Server (free)
-- **TablePlus** - Modern database GUI (freemium)
-
-### Online Practice Platforms
-- **SQLZoo** - Interactive tutorials
-- **LeetCode** - SQL problems (easy to hard)
-- **HackerRank** - SQL challenges
-- **Mode Analytics** - Real datasets
-- **DataLemur** - SQL interview questions
-- **Stratascratch** - Data science SQL questions
-
-### Learning Resources
-- **PostgreSQL Documentation** - Most comprehensive
-- **MySQL Documentation** - Official reference
-- **SQLBolt** - Interactive lessons
-- **W3Schools SQL** - Quick reference
-- **SQL Tutorial by Mode** - Analytics focus
-
-### Books for Data Analysts
-- "SQL for Data Analysis" by Cathy Tanimura
-- "Practical SQL" by Anthony DeBarros
-- "SQL Queries for Mere Mortals" by John Viescas
-- "The Art of SQL" by Stéphane Faroult
-
-### Practice Datasets
-- **Kaggle Datasets** - Real-world data
-- **Maven Analytics** - Sample databases
-- **SQL Murder Mystery** - Fun learning game
-- **AdventureWorks** - Microsoft sample database
-- **Northwind** - Classic sample database
-
-## Quick Reference Cheat Sheet
-
-### Query Order of Execution
-```
-FROM → WHERE → GROUP BY → HAVING → SELECT → DISTINCT → ORDER BY → LIMIT
-```
-
-### Common Keyboard Shortcuts (most SQL clients)
-- **Ctrl/Cmd + Enter** - Execute query
-- **Ctrl/Cmd + /** - Comment/uncomment
-- **Ctrl/Cmd + Shift + F** - Format SQL
-- **F5** - Refresh
-- **Ctrl/Cmd + Space** - Auto-complete
-
-### Performance Tips
-1. Index columns used in WHERE, JOIN, ORDER BY
-2. Avoid SELECT * in production
-3. Use EXPLAIN to analyze queries
-4. Limit result sets
-5. Avoid correlated subqueries when possible
-6. Use appropriate data types
-7. Regularly update statistics
-8. Monitor slow query logs
-
+LEFT JOIN orders o ON o.customer_id = c.id
+GROUP BY c.id, c.name
+ORDER BY total_spent DESC;
+============================================================
+END OF DATABASE CREATION & CORE COMMANDS CHEATSHEET
+============================================================
