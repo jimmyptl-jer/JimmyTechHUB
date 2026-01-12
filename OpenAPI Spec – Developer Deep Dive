@@ -1,5 +1,3 @@
----
-
 # OpenAPI Spec – Developer Deep Dive
 
 **Graywolf Dev API**
@@ -211,5 +209,3 @@ paths: {}
 3. Add `/health` endpoint
 4. Validate OpenAPI in CI
 5. Generate client types
-
----
