@@ -2,14 +2,14 @@
 
 **Graywolf Dev API**
 
-> This document explains the OpenAPI Specification from a **backend developer’s perspective** — focusing on **why each section exists**, **how it maps to code**, and **how to evolve it safely**.
+> This document explains the OpenAPI Specification from a **backend developer's perspective** — focusing on **why each section exists**, **how it maps to code**, and **how to evolve it safely**.
 > The OpenAPI file is intentionally written **only up to `paths: {}`**.
 
 ---
 
 ## 1. Why Backend Developers Should Care About OpenAPI
 
-From a developer’s POV, OpenAPI is **not documentation first** — it is:
+From a developer's POV, OpenAPI is **not documentation first** — it is:
 
 * A **contract** between backend and frontend
 * A **compile-time safety net** for APIs
@@ -128,7 +128,7 @@ servers:
 
 ---
 
-## 6. Why `paths` Is Empty (And That’s Intentional)
+## 6. Why `paths` Is Empty (And That's Intentional)
 
 ```yaml
 paths: {}
