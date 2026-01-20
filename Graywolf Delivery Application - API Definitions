@@ -132,11 +132,7 @@ paths:
               schema:
                 type: array
                 items:
-                  type: string
-              example:
-                - Laptop
-                - Book
-                - T-Shirt
+                  $ref: '#/components/schemas/Product'
 
   /products/{productId}:
     get:
@@ -158,24 +154,8 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  productId:
-                    type: string
-                    example: PROD-10021
-                  name:
-                    type: string
-                    example: Wireless Headphones
-                  price:
-                    type: number
-                    example: 1499.50
-                  currency:
-                    type: string
-                    example: INR
-                  createdAt:
-                    type: string
-                    format: date-time
-                    example: "2026-01-20T10:30:00Z"
+                $ref: '#/components/schemas/Product'
+                
         '404':
           description: Product not found
 
@@ -209,43 +189,6 @@ paths:
                   message:
                     type: string
                     example: Internal server error
-
-  /metrics:
-    get:
-      summary: Application metrics
-      description: Exposes application metrics for monitoring systems.
-      tags:
-        - Monitoring
-      responses:
-        '200':
-          description: Metrics data
-          content:
-            text/plain:
-              schema:
-                type: string
-                example: process_cpu_seconds_total 12.34
-
-  /status:
-    get:
-      summary: Application status
-      description: Returns deployment and runtime status information.
-      tags:
-        - System
-      responses:
-        '200':
-          description: Status information
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  environment:
-                    type: string
-                    example: development
-                  version:
-                    type: string
-                    example: 0.0.1
-
   /users:
     get:
       summary: Get users
@@ -357,3 +300,231 @@ paths:
       responses:
         '200':
           description: List of payments
+
+
+components:
+  schemas:
+
+    Product:
+      type: object
+      description: Represents a product available for purchase.
+      required:
+        - productId
+        - title
+        - categoryId
+        - price
+        - currency
+        - stock
+        - status
+        - createdAt
+      properties:
+        productId:
+          type: string
+          example: PROD-10001
+        title:
+          type: string
+          example: "Logitech MX Master 3 Wireless Mouse"
+        description:
+          type: string
+          example: "Advanced wireless mouse with ergonomic design"
+        categoryId:
+          type: integer
+          example: 101
+        brand:
+          type: string
+          example: Logitech
+        price:
+          type: number
+          example: 7999.00
+        currency:
+          type: string
+          example: INR
+        stock:
+          type: integer
+          example: 120
+        status:
+          type: string
+          enum:
+            - ACTIVE
+            - INACTIVE
+            - OUT_OF_STOCK
+          example: ACTIVE
+        rating:
+          type: number
+          example: 4.6
+        images:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-01-20T08:30:00Z"
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-01-22T10:15:00Z"
+
+    User:
+      type: object
+      description: Represents a user in the delivery application.
+      required:
+        - userId
+        - name
+        - email
+        - role
+        - status
+        - createdAt
+      properties:
+
+        userId:
+          type: string
+          description: Unique identifier for the user
+          example: USER-10021
+
+        name:
+          type: string
+          example: Jimmy Patel
+
+        email:
+          type: string
+          format: email
+          example: jimmy@email.com
+
+        phone:
+          type: string
+          example: "+91-9876543210"
+
+        role:
+          type: string
+          description: Role assigned to the user
+          enum:
+            - CUSTOMER
+            - ADMIN
+            - RIDER
+          example: CUSTOMER
+
+        status:
+          type: string
+          description: Current user status
+          enum:
+            - ACTIVE
+            - INACTIVE
+            - BLOCKED
+          example: ACTIVE
+
+        addresses:
+          type: array
+          description: Saved delivery addresses
+          items:
+            type: object
+            required:
+              - addressId
+              - line1
+              - city
+              - state
+              - postalCode
+              - country
+            properties:
+              addressId:
+                type: string
+                example: ADDR-101
+              line1:
+                type: string
+                example: "21 MG Road"
+              line2:
+                type: string
+                example: "Near Alkapuri Circle"
+              city:
+                type: string
+                example: Vadodara
+              state:
+                type: string
+                example: Gujarat
+              postalCode:
+                type: string
+                example: "390001"
+              country:
+                type: string
+                example: IN
+              isDefault:
+                type: boolean
+                example: true
+
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-01-15T09:00:00Z"
+
+        updatedAt:
+          type: string
+          format: date-time
+          example: "2026-01-22T14:20:00Z"
+
+    Delivery:
+      type: object
+      required:
+        - deliveryId
+        - orderId
+        - riderId
+        - status
+        - createdAt
+      properties:
+        deliveryId:
+          type: string
+          example: DEL-1001
+        orderId:
+          type: string
+          example: ORD-10021
+        riderId:
+          type: string
+          example: RID-501
+        status:
+          type: string
+          enum:
+            - ASSIGNED
+            - PICKED_UP
+            - IN_TRANSIT
+            - DELIVERED
+            - FAILED
+          example: IN_TRANSIT
+        estimatedTime:
+          type: string
+          example: "30 mins"
+        createdAt:
+          type: string
+          format: date-time
+    
+    Payment:
+      type: object
+      required:
+        - paymentId
+        - orderId
+        - amount
+        - method
+        - status
+      properties:
+        paymentId:
+          type: string
+          example: PAY-9001
+        orderId:
+          type: string
+          example: ORD-10021
+        amount:
+          type: number
+          example: 1499.50
+        method:
+          type: string
+          enum:
+            - UPI
+            - CARD
+            - NET_BANKING
+            - COD
+        status:
+          type: string
+          enum:
+            - PENDING
+            - PAID
+            - FAILED
+            - REFUNDED
+
