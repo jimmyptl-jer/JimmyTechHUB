@@ -75,7 +75,7 @@ paths:
                   - price
                   - stock
                 properties:
-                  title:
+                  title: 
                     type: string
                     example: "Logitech MX Master 3 Wireless Mouse"
                   description:
@@ -190,6 +190,74 @@ paths:
                     type: string
                     example: Internal server error
   /users:
+    post:
+      summary: create neew user
+      description: |
+        Endpoint to add new user
+      tags: 
+        - Users
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: 
+                userId:
+                  type: string
+                  example: IND-USR-0001
+                firstname:
+                  type: string
+                  example: Jimmy
+                lastname:
+                  type: string
+                  example: Patel
+                phone:
+                  type: number
+                  example: 9106766041
+                email:
+                  type: string
+                  example: jimmypatel687@yahoo.com
+                role:
+                  type: string
+                  enum:
+                    - CUSTOMER
+                    - ADMIN
+                    - RIDER
+                  example: CUSTOMER
+                status:
+                  type: string
+                  enum:
+                    - ACTIVE
+                    - INACTIVE
+                    - SUSPENDED
+                address:
+                  type: array
+                  items: 
+                    type: object
+                    required:
+                      - line1
+                      - line2
+                      - city
+                      - state
+                      - postalCode
+                      - country
+                    properties:
+                      line1:
+                        type: string
+                      line2:
+                        type: string
+                      city:
+                        type: string
+                      state:
+                        type: string
+                      postalCode:
+                        type: string
+                      country:
+                        type: string
+      responses: 
+        '200':
+          description: 
+                
     get:
       summary: Get users
       description: Retrieves users registered in the system.
@@ -198,6 +266,101 @@ paths:
       responses:
         '200':
           description: List of users
+    
+    put:
+      summary: create neew user
+      description: |
+        Endpoint to add new user
+      tags: 
+        - Users
+      requestBody: 
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: 
+                userId:
+                  type: string
+                  example: IND-USR-0001
+                firstname:
+                  type: string
+                  example: Jimmy
+                lastname:
+                  type: string
+                  example: Patel
+                phone:
+                  type: number
+                  example: 9106766041
+                email:
+                  type: string
+                  example: jimmypatel687@yahoo.com
+                role:
+                  type: string
+                  enum:
+                    - CUSTOMER
+                    - ADMIN
+                    - RIDER
+                  example: CUSTOMER
+                status:
+                  type: string
+                  enum:
+                    - ACTIVE
+                    - INACTIVE
+                    - SUSPENDED
+                address:
+                  type: array
+                  items: 
+                    type: object
+                    required:
+                      - line1
+                      - line2
+                      - city
+                      - state
+                      - postalCode
+                      - country
+                    properties:
+                      line1:
+                        type: string
+                      line2:
+                        type: string
+                      city:
+                        type: string
+                      state:
+                        type: string
+                      postalCode:
+                        type: string
+                      country:
+                        type: string
+      responses: 
+        '201':
+          description: 
+    
+    delete: 
+      summary: Get all orders
+      description: Returns all the orders in the system.
+      tags:
+        - Users
+      parameters:
+        - name: orderId
+          in: query
+          required: false
+          description: Optional order ID filter
+          schema:
+            type: integer
+          example: 101
+      responses:
+        '200':
+          description: order retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              example:
+                - Electronics
+                - Books
+                - Clothing
 
   /orders:
     get:
