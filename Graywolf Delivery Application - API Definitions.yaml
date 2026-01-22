@@ -1,0 +1,463 @@
+openapi: 3.0.1
+
+info:
+  title: Graywolf Delivery Application - API Definitions
+  description: |
+    **Graywolf Dev API** is a backend system for a **delivery platform**, exposing services for:
+
+    - 📦 **Order lifecycle management**
+    - 🚚 **Delivery assignment & tracking**
+    - 💳 **Payments & transactions**
+    - 👤 **User & rider management**
+    - 🔌 **System integrations**
+
+    ### Architecture Principles
+    - Cloud-native
+    - Serverless-first
+    - Horizontally scalable
+    - Reliable & fault-tolerant
+
+    Designed to support **scalability**, **automation**, and **reliable operations**.
+  version: 0.0.1
+  termsOfService: https://www.jimmypatel.tech
+  contact:
+    name: Jimmy Patel
+    url: https://www.jimmypatel.dev
+    email: contact@jimmypatel.dev
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://development.eazyshop-server.com/v1
+    description: |
+      **Development server**
+
+      Used for:
+      - Local testing
+      - Feature validation
+      - QA verification
+
+paths:
+  /categories:
+    get:
+      summary: Get all categories
+      description: |
+        Returns a list of available **product categories**.
+
+        ### Features
+        - Fetch all categories
+        - Optional filtering using `categoryId`
+
+        ### Example
+        ```
+        GET /categories?categoryId=101
+        ```
+      tags:
+        - Categories
+      parameters:
+        - name: categoryId
+          in: query
+          required: false
+          description: Optional category ID filter
+          schema:
+            type: integer
+          example: 101
+      responses:
+        '200':
+          description: Categories retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              example:
+                - Electronics
+                - Books
+                - Clothing
+
+  /products:
+    post:
+      summary: Add new product
+      description: |
+        Creates a **new product** in the catalog.
+
+        ### Required fields
+        - `title`
+        - `categoryId`
+        - `price`
+        - `stock`
+
+        ### Notes
+        - Prices are numeric
+        - Stock represents available inventory
+      tags:
+        - Products
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - categoryId
+                - price
+                - stock
+              properties:
+                title:
+                  type: string
+                  example: Logitech MX Master 3 Wireless Mouse
+                description:
+                  type: string
+                  example: Advanced ergonomic wireless mouse
+                categoryId:
+                  type: integer
+                  example: 101
+                brand:
+                  type: string
+                  example: Logitech
+                price:
+                  type: number
+                  example: 7999.00
+                currency:
+                  type: string
+                  example: INR
+                stock:
+                  type: integer
+                  example: 120
+                images:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Product created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Product created successfully
+
+    get:
+      summary: Get all products
+      description: |
+        Returns a list of products available in the system.
+
+        ### Optional Filters
+        - `productId`
+
+        ### Response
+        Returns an array of **Product objects**.
+      tags:
+        - Products
+      parameters:
+        - name: productId
+          in: query
+          required: false
+          description: Optional product ID filter
+          schema:
+            type: integer
+          example: 101
+      responses:
+        '200':
+          description: Products retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+
+  /products/{productId}:
+    get:
+      summary: Get product by ID
+      description: |
+        Retrieves details of a **specific product** using the product ID.
+
+        ### Includes
+        - Pricing
+        - Stock
+        - Status
+        - Metadata
+      tags:
+        - Products
+      parameters:
+        - name: productId
+          in: path
+          required: true
+          description: Unique identifier of the product
+          schema:
+            type: string
+          example: PROD-10021
+      responses:
+        '200':
+          description: Product retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '404':
+          description: Product not found
+
+  /health:
+    get:
+      summary: Server health check
+      description: |
+        Confirms whether the API is **running and reachable**.
+
+        ### Success
+        - Returns `200 OK`
+        - Includes timestamp
+
+        ### Failure
+        - Returns `500`
+        - Indicates internal server error
+      tags:
+        - Health
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Server health is OK!
+                  timestamp:
+                    type: string
+                    format: date-time
+        '500':
+          description: API is unhealthy
+
+  /users:
+    post:
+      summary: Create new user
+      description: |
+        Creates a **new user account** in the system.
+
+        ### Supported Roles
+        - `CUSTOMER`
+        - `ADMIN`
+        - `RIDER`
+
+        ### Status values
+        - `ACTIVE`
+        - `INACTIVE`
+        - `SUSPENDED`
+      tags:
+        - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created successfully
+
+    get:
+      summary: Get users
+      description: |
+        Retrieves all users registered in the system.
+
+        ### Includes
+        - Profile information
+        - Role & status
+        - Contact details
+      tags:
+        - Users
+      responses:
+        '200':
+          description: List of users
+
+    put:
+      summary: Update user
+      description: |
+        Updates an **existing user's details**.
+
+        ### Notes
+        - `userId` is required
+        - Partial updates supported
+      tags:
+        - Users
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '200':
+          description: User updated successfully
+
+    delete:
+      summary: Delete user
+      description: |
+        Deletes a user from the system.
+
+        ⚠️ **Warning**
+        - This action is irreversible
+      tags:
+        - Users
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          description: Unique user identifier
+          schema:
+            type: string
+          example: USER-10021
+      responses:
+        '200':
+          description: User deleted successfully
+
+  /orders:
+    get:
+      summary: Get all orders
+      description: |
+        Retrieves all orders placed in the system.
+
+        ### Optional Filter
+        - `orderId`
+      tags:
+        - Orders
+      responses:
+        '200':
+          description: Orders retrieved successfully
+
+  /orders/{orderId}:
+    get:
+      summary: Get order by ID
+      description: |
+        Fetches details of a **specific order**.
+
+        ### Includes
+        - User reference
+        - Order status
+        - Payment amount
+      tags:
+        - Orders
+      parameters:
+        - name: orderId
+          in: path
+          required: true
+          schema:
+            type: string
+          example: ORD-10021
+      responses:
+        '200':
+          description: Order retrieved successfully
+        '404':
+          description: Order not found
+
+  /deliveries:
+    get:
+      summary: Get deliveries
+      description: |
+        Retrieves delivery records.
+
+        ### Delivery lifecycle
+        - ASSIGNED
+        - PICKED_UP
+        - IN_TRANSIT
+        - DELIVERED
+        - FAILED
+      tags:
+        - Deliveries
+      responses:
+        '200':
+          description: Deliveries retrieved successfully
+
+  /riders:
+    get:
+      summary: Get riders
+      description: |
+        Retrieves delivery riders available in the system.
+      tags:
+        - Riders
+      responses:
+        '200':
+          description: Riders retrieved successfully
+
+  /payments:
+    get:
+      summary: Get payments
+      description: |
+        Retrieves payment transactions.
+
+        ### Supported Methods
+        - `UPI`
+        - `CARD`
+        - `NET_BANKING`
+        - `COD`
+      tags:
+        - Payments
+      responses:
+        '200':
+          description: Payments retrieved successfully
+
+components:
+  schemas:
+    Product:
+      type: object
+      description: |
+        Represents a **product** available for purchase.
+
+        ### Lifecycle
+        `CREATED → ACTIVE → OUT_OF_STOCK / INACTIVE`
+      required:
+        - productId
+        - title
+        - price
+        - stock
+        - status
+      properties:
+        productId:
+          type: string
+          example: PROD-10001
+        title:
+          type: string
+        price:
+          type: number
+        stock:
+          type: integer
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, OUT_OF_STOCK]
+
+    User:
+      type: object
+      description: |
+        Represents a **user** of the platform.
+
+        Users can act as:
+        - Customers
+        - Admins
+        - Riders
+      required:
+        - userId
+        - email
+        - role
+        - status
+      properties:
+        userId:
+          type: string
+          example: USER-10021
+        name:
+          type: string
+          example: Jimmy Patel
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [CUSTOMER, ADMIN, RIDER]
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, BLOCKED]
