@@ -1,693 +1,909 @@
-openapi: 3.0.1
+# OpenAPI Specification Guide
 
+## Overview
+
+OpenAPI Specification (OAS) is a standard, language-agnostic interface description for HTTP APIs. It allows both humans and computers to discover and understand the capabilities of a service without requiring access to source code or additional documentation.
+
+**Current Version:** 3.1.0 (compatible with 3.0.x)
+
+## Basic Structure
+
+An OpenAPI document is written in YAML or JSON format and follows this basic structure:
+
+```yaml
+openapi: 3.0.0
 info:
-  title: Graywolf Delivery Application - API Definitions
-  description: >
-    Graywolf Dev API is a backend system for a delivery platform, exposing services
-    for order lifecycle management, delivery assignment, tracking, and system integrations.
-    The API is designed using cloud-native and serverless principles
-    to support scalability, automation, and reliable operations.
-  version: 0.0.1
-  termsOfService: https://www.jimmypatel.tech
-  contact:
-    name: Jimmy Patel
-    url: https://www.jimmypatel.dev
-    email: contact@jimmypatel.dev
-  license:
-    name: MIT
-    url: https://opensource.org/licenses/MIT
-
+  title: API Title
+  version: 1.0.0
 servers:
-  - url: https://development.eazyshop-server.com/v1
-    description: Development server (developer machine)
-
+  - url: https://api.example.com/v1
 paths:
-  /categories:
+  /resource:
     get:
-      summary: Get all categories
-      description: Returns a list of available categories. Optionally filter by category ID.
-      tags:
-        - Categories
-      parameters:
-        - name: categoryId
-          in: query
-          required: false
-          description: Optional category ID filter
-          schema:
-            type: integer
-          example: 101
+      summary: Get resource
       responses:
         '200':
-          description: Categories retrieved successfully
+          description: Success
+```
+
+---
+
+## Document Structure
+
+### 1. OpenAPI Object (Root)
+
+The root document object contains metadata and configuration.
+
+```yaml
+openapi: 3.0.0
+info: {...}
+servers: [...]
+paths: {...}
+components: {...}
+security: [...]
+tags: [...]
+externalDocs: {...}
+```
+
+**Required Fields:**
+- `openapi` - OpenAPI version (e.g., "3.0.0")
+- `info` - API metadata
+- `paths` - Available paths and operations
+
+---
+
+### 2. Info Object
+
+Provides metadata about the API.
+
+```yaml
+info:
+  title: My API
+  description: |
+    This is a multi-line description
+    using YAML literal block scalar
+  version: 1.0.0
+  termsOfService: https://example.com/terms
+  contact:
+    name: API Support
+    url: https://example.com/support
+    email: support@example.com
+  license:
+    name: Apache 2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0.html
+```
+
+**Required Fields:**
+- `title` - API name
+- `version` - API version
+
+---
+
+### 3. Servers Object
+
+Specifies API server URLs and variables.
+
+```yaml
+servers:
+  - url: https://{environment}.example.com/v1
+    description: Main server
+    variables:
+      environment:
+        default: api
+        enum:
+          - api
+          - api-staging
+          - api-dev
+  - url: http://localhost:3000
+    description: Local development server
+```
+
+---
+
+### 4. Paths Object
+
+Defines available endpoints and their operations.
+
+```yaml
+paths:
+  /users:
+    get:
+      summary: List all users
+      operationId: listUsers
+      tags:
+        - Users
+      parameters:
+        - name: limit
+          in: query
+          description: Maximum number of results
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Successful response
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  type: string
-              example:
-                - Electronics
-                - Books
-                - Clothing
-  /products:
+                  $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+    
     post:
-      summary: Add new Product
-      description: Creates a new product in the catalog.
+      summary: Create a user
+      operationId: createUser
       tags:
-        - Products
-      parameters:
-        - name: productId
-          in: query
-          required: false
-          description: Optional product ID filter
-          schema:
-            type: integer
-          example: 101
+        - Users
       requestBody:
         required: true
         content:
           application/json:
-              schema:
-                type: object
-                required:
-                  - title
-                  - categoryId
-                  - price
-                  - stock
-                properties:
-                  title: 
-                    type: string
-                    example: "Logitech MX Master 3 Wireless Mouse"
-                  description:
-                    type: string
-                    example: "Advanced ergonomic wireless mouse"
-                  categoryId:
-                    type: integer
-                    example: 101
-                  brand:
-                    type: string
-                    example: Logitech
-                  price:
-                    type: number
-                    example: 7999.00
-                  currency:
-                    type: string
-                    example: INR
-                  stock:
-                    type: integer
-                    example: 120
-                  images:
-                    type: array
-                    items:
-                      type: string
-      responses: 
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
         '201':
-          description: Product created successfully
+          description: User created
           content:
             application/json:
               schema:
-                type: object
-                properties: 
-                  message:
-                    type: string
-                    example: Product created successfully
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid input
+
+  /users/{userId}:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        description: User ID
+        schema:
+          type: string
+    
     get:
-      summary: Get all products
-      description: Returns a list of available products. Optionally filter by product ID.
+      summary: Get user by ID
+      operationId: getUserById
       tags:
-        - Products
-      parameters:
-        - name: productId
-          in: query
-          required: false
-          description: Optional product ID filter
-          schema:
-            type: integer
-          example: 101
+        - Users
       responses:
         '200':
-          description: Products retrieved successfully
+          description: User found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          description: User not found
+    
+    put:
+      summary: Update user
+      operationId: updateUser
+      tags:
+        - Users
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserInput'
+      responses:
+        '200':
+          description: User updated
+        '404':
+          description: User not found
+    
+    delete:
+      summary: Delete user
+      operationId: deleteUser
+      tags:
+        - Users
+      responses:
+        '204':
+          description: User deleted
+        '404':
+          description: User not found
+```
+
+---
+
+### 5. Parameters
+
+Parameters can be defined in different locations.
+
+#### Path Parameters
+
+```yaml
+parameters:
+  - name: userId
+    in: path
+    required: true
+    description: Unique user identifier
+    schema:
+      type: string
+      format: uuid
+```
+
+#### Query Parameters
+
+```yaml
+parameters:
+  - name: filter
+    in: query
+    required: false
+    description: Filter criteria
+    schema:
+      type: string
+  - name: page
+    in: query
+    required: false
+    schema:
+      type: integer
+      default: 1
+  - name: sort
+    in: query
+    required: false
+    schema:
+      type: string
+      enum:
+        - asc
+        - desc
+```
+
+#### Header Parameters
+
+```yaml
+parameters:
+  - name: X-API-Key
+    in: header
+    required: true
+    description: API authentication key
+    schema:
+      type: string
+```
+
+#### Cookie Parameters
+
+```yaml
+parameters:
+  - name: sessionId
+    in: cookie
+    required: true
+    schema:
+      type: string
+```
+
+---
+
+### 6. Request Body
+
+Describes the request body for operations like POST, PUT, PATCH.
+
+```yaml
+requestBody:
+  description: User object to be created
+  required: true
+  content:
+    application/json:
+      schema:
+        $ref: '#/components/schemas/UserInput'
+      examples:
+        user1:
+          summary: Example user
+          value:
+            name: John Doe
+            email: john@example.com
+            age: 30
+    application/xml:
+      schema:
+        $ref: '#/components/schemas/UserInput'
+    multipart/form-data:
+      schema:
+        type: object
+        properties:
+          file:
+            type: string
+            format: binary
+          metadata:
+            type: string
+```
+
+---
+
+### 7. Responses
+
+Defines possible responses from an operation.
+
+```yaml
+responses:
+  '200':
+    description: Successful operation
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/User'
+        examples:
+          user:
+            summary: A user example
+            value:
+              id: 12345
+              name: John Doe
+              email: john@example.com
+    headers:
+      X-Rate-Limit:
+        description: Requests per hour allowed
+        schema:
+          type: integer
+      X-Expires-After:
+        description: Date/time when token expires
+        schema:
+          type: string
+          format: date-time
+  
+  '400':
+    description: Bad request
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Error'
+  
+  '404':
+    description: Resource not found
+  
+  'default':
+    description: Unexpected error
+    content:
+      application/json:
+        schema:
+          $ref: '#/components/schemas/Error'
+```
+
+---
+
+### 8. Components Object
+
+Reusable components for schemas, parameters, responses, etc.
+
+```yaml
+components:
+  schemas:
+    User:
+      type: object
+      required:
+        - id
+        - name
+        - email
+      properties:
+        id:
+          type: string
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        age:
+          type: integer
+          minimum: 0
+          maximum: 150
+        role:
+          type: string
+          enum:
+            - admin
+            - user
+            - guest
+          default: user
+        createdAt:
+          type: string
+          format: date-time
+          readOnly: true
+        metadata:
+          type: object
+          additionalProperties: true
+      example:
+        id: 550e8400-e29b-41d4-a716-446655440000
+        name: John Doe
+        email: john@example.com
+        age: 30
+        role: user
+    
+    UserInput:
+      type: object
+      required:
+        - name
+        - email
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        age:
+          type: integer
+    
+    Error:
+      type: object
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+        details:
+          type: array
+          items:
+            type: string
+  
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      description: Page number
+      schema:
+        type: integer
+        minimum: 1
+        default: 1
+    
+    LimitParam:
+      name: limit
+      in: query
+      description: Items per page
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+  
+  responses:
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    
+    Unauthorized:
+      description: Unauthorized access
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+  
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://example.com/oauth/authorize
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            read: Read access
+            write: Write access
+            admin: Admin access
+```
+
+---
+
+## Schema Data Types
+
+### Primitive Types
+
+```yaml
+# String
+type: string
+minLength: 1
+maxLength: 100
+pattern: '^[A-Za-z]+$'
+
+# String with format
+type: string
+format: date           # YYYY-MM-DD
+format: date-time      # RFC 3339
+format: email
+format: uuid
+format: uri
+format: hostname
+format: ipv4
+format: ipv6
+
+# Integer
+type: integer
+minimum: 0
+maximum: 100
+multipleOf: 5
+
+# Number
+type: number
+minimum: 0.0
+maximum: 100.0
+exclusiveMinimum: true
+
+# Boolean
+type: boolean
+
+# Null
+type: 'null'
+nullable: true  # OpenAPI 3.0.x
+```
+
+### Arrays
+
+```yaml
+type: array
+items:
+  type: string
+minItems: 1
+maxItems: 10
+uniqueItems: true
+
+# Array of objects
+type: array
+items:
+  $ref: '#/components/schemas/User'
+
+# Array with multiple types (OpenAPI 3.1)
+type: array
+items:
+  oneOf:
+    - type: string
+    - type: integer
+```
+
+### Objects
+
+```yaml
+type: object
+required:
+  - name
+  - email
+properties:
+  name:
+    type: string
+  email:
+    type: string
+  age:
+    type: integer
+additionalProperties: false  # No extra properties allowed
+
+# Free-form object
+type: object
+additionalProperties: true
+
+# Map/Dictionary
+type: object
+additionalProperties:
+  type: string
+```
+
+### Enums
+
+```yaml
+type: string
+enum:
+  - pending
+  - approved
+  - rejected
+default: pending
+```
+
+### Composition
+
+```yaml
+# allOf - Combines schemas (inheritance)
+allOf:
+  - $ref: '#/components/schemas/BaseUser'
+  - type: object
+    properties:
+      adminLevel:
+        type: integer
+
+# oneOf - Exactly one schema must match
+oneOf:
+  - $ref: '#/components/schemas/Cat'
+  - $ref: '#/components/schemas/Dog'
+discriminator:
+  propertyName: petType
+
+# anyOf - One or more schemas must match
+anyOf:
+  - type: string
+  - type: integer
+
+# not - Schema must not match
+not:
+  type: string
+```
+
+---
+
+## Security
+
+### Applying Security
+
+```yaml
+# Global security
+security:
+  - ApiKeyAuth: []
+
+# Operation-level security
+paths:
+  /users:
+    get:
+      security:
+        - BearerAuth: []
+        - OAuth2:
+            - read
+            - write
+```
+
+### Security Scheme Types
+
+```yaml
+components:
+  securitySchemes:
+    # API Key
+    ApiKey:
+      type: apiKey
+      in: header  # or query, cookie
+      name: X-API-Key
+    
+    # HTTP Basic
+    BasicAuth:
+      type: http
+      scheme: basic
+    
+    # Bearer Token
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    
+    # OAuth2
+    OAuth2:
+      type: oauth2
+      flows:
+        implicit:
+          authorizationUrl: https://example.com/oauth/authorize
+          scopes:
+            read: Read access
+            write: Write access
+        password:
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            read: Read access
+            write: Write access
+        clientCredentials:
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            read: Read access
+        authorizationCode:
+          authorizationUrl: https://example.com/oauth/authorize
+          tokenUrl: https://example.com/oauth/token
+          scopes:
+            read: Read access
+            write: Write access
+    
+    # OpenID Connect
+    OpenID:
+      type: openIdConnect
+      openIdConnectUrl: https://example.com/.well-known/openid-configuration
+```
+
+---
+
+## Tags
+
+Organize operations into logical groups.
+
+```yaml
+tags:
+  - name: Users
+    description: User management operations
+    externalDocs:
+      description: Find more info
+      url: https://example.com/docs/users
+  - name: Products
+    description: Product catalog operations
+
+paths:
+  /users:
+    get:
+      tags:
+        - Users
+      summary: List users
+```
+
+---
+
+## External Documentation
+
+```yaml
+externalDocs:
+  description: Find more information here
+  url: https://example.com/docs
+```
+
+---
+
+## Examples
+
+### Complete API Example
+
+```yaml
+openapi: 3.0.0
+info:
+  title: E-Commerce API
+  version: 1.0.0
+  description: API for managing an e-commerce platform
+  contact:
+    name: API Support
+    email: support@example.com
+
+servers:
+  - url: https://api.example.com/v1
+    description: Production server
+  - url: https://staging-api.example.com/v1
+    description: Staging server
+
+tags:
+  - name: Products
+    description: Product operations
+  - name: Orders
+    description: Order operations
+
+paths:
+  /products:
+    get:
+      tags:
+        - Products
+      summary: List products
+      parameters:
+        - $ref: '#/components/parameters/PageParam'
+        - $ref: '#/components/parameters/LimitParam'
+      responses:
+        '200':
+          description: Success
           content:
             application/json:
               schema:
                 type: array
                 items:
                   $ref: '#/components/schemas/Product'
-
-  /products/{productId}:
-    get:
-      summary: Get product by ID
-      description: Retrieves details of a specific product using the product ID.
+    
+    post:
       tags:
         - Products
-      parameters:
-        - name: productId
-          in: path
-          required: true
-          description: Unique identifier of the product
-          schema:
-            type: string
-          example: PROD-10021
+      summary: Create product
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductInput'
       responses:
-        '200':
-          description: Product retrieved successfully
+        '201':
+          description: Product created
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Product'
-                
-        '404':
-          description: Product not found
-
-  /health:
-    get:
-      summary: Server health check
-      description: Confirms whether the API is running.
-      tags:
-        - Health
-      responses:
-        '200':
-          description: API is healthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Server health is OK!
-                  timestamp:
-                    type: string
-                    format: date-time
-        '500':
-          description: API is unhealthy
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: Internal server error
-  /users:
-    post:
-      summary: create neew user
-      description: |
-        Endpoint to add new user
-      tags: 
-        - Users
-      requestBody: 
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: 
-                userId:
-                  type: string
-                  example: IND-USR-0001
-                firstname:
-                  type: string
-                  example: Jimmy
-                lastname:
-                  type: string
-                  example: Patel
-                phone:
-                  type: number
-                  example: 9106766041
-                email:
-                  type: string
-                  example: jimmypatel687@yahoo.com
-                role:
-                  type: string
-                  enum:
-                    - CUSTOMER
-                    - ADMIN
-                    - RIDER
-                  example: CUSTOMER
-                status:
-                  type: string
-                  enum:
-                    - ACTIVE
-                    - INACTIVE
-                    - SUSPENDED
-                address:
-                  type: array
-                  items: 
-                    type: object
-                    required:
-                      - line1
-                      - line2
-                      - city
-                      - state
-                      - postalCode
-                      - country
-                    properties:
-                      line1:
-                        type: string
-                      line2:
-                        type: string
-                      city:
-                        type: string
-                      state:
-                        type: string
-                      postalCode:
-                        type: string
-                      country:
-                        type: string
-      responses: 
-        '200':
-          description: 
-                
-    get:
-      summary: Get users
-      description: Retrieves users registered in the system.
-      tags:
-        - Users
-      responses:
-        '200':
-          description: List of users
-    
-    put:
-      summary: create neew user
-      description: |
-        Endpoint to add new user
-      tags: 
-        - Users
-      requestBody: 
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: 
-                userId:
-                  type: string
-                  example: IND-USR-0001
-                firstname:
-                  type: string
-                  example: Jimmy
-                lastname:
-                  type: string
-                  example: Patel
-                phone:
-                  type: number
-                  example: 9106766041
-                email:
-                  type: string
-                  example: jimmypatel687@yahoo.com
-                role:
-                  type: string
-                  enum:
-                    - CUSTOMER
-                    - ADMIN
-                    - RIDER
-                  example: CUSTOMER
-                status:
-                  type: string
-                  enum:
-                    - ACTIVE
-                    - INACTIVE
-                    - SUSPENDED
-                address:
-                  type: array
-                  items: 
-                    type: object
-                    required:
-                      - line1
-                      - line2
-                      - city
-                      - state
-                      - postalCode
-                      - country
-                    properties:
-                      line1:
-                        type: string
-                      line2:
-                        type: string
-                      city:
-                        type: string
-                      state:
-                        type: string
-                      postalCode:
-                        type: string
-                      country:
-                        type: string
-      responses: 
-        '201':
-          description: 
-    
-    delete: 
-      summary: Get all orders
-      description: Returns all the orders in the system.
-      tags:
-        - Users
-      parameters:
-        - name: orderId
-          in: query
-          required: false
-          description: Optional order ID filter
-          schema:
-            type: integer
-          example: 101
-      responses:
-        '200':
-          description: order retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-              example:
-                - Electronics
-                - Books
-                - Clothing
-
-  /orders:
-    get:
-      summary: Get all orders
-      description: Returns all the orders in the system.
-      tags:
-        - Orders
-      parameters:
-        - name: orderId
-          in: query
-          required: false
-          description: Optional order ID filter
-          schema:
-            type: integer
-          example: 101
-      responses:
-        '200':
-          description: order retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  type: string
-              example:
-                - Electronics
-                - Books
-                - Clothing
-
-  /orders/{orderId}:
-    get:
-      summary: Get order by ID
-      description: Retrieves details of a specific order using the order ID.
-      tags:
-        - Orders
-      parameters:
-        - name: orderId
-          in: path
-          required: true
-          description: Unique identifier of the order
-          schema:
-            type: string
-          example: ORD-10021
-      responses:
-        '200':
-          description: Order retrieved successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  orderId:
-                    type: string
-                    example: ORD-10021
-                  userId:
-                    type: integer
-                    example: 501
-                  status:
-                    type: string
-                    example: DELIVERED
-                  totalAmount:
-                    type: number
-                    example: 1499.50
-                  currency:
-                    type: string
-                    example: INR
-                  createdAt:
-                    type: string
-                    format: date-time
-                    example: "2026-01-20T10:30:00Z"
-        '404':
-          description: Order not found
-
-  /deliveries:
-    get:
-      summary: Get deliveries
-      description: Retrieves delivery records.
-      tags:
-        - Deliveries
-      responses:
-        '200':
-          description: List of deliveries
-
-  /riders:
-    get:
-      summary: Get riders
-      description: Retrieves delivery riders.
-      tags:
-        - Riders
-      responses:
-        '200':
-          description: List of riders
-
-  /payments:
-    get:
-      summary: Get payments
-      description: Retrieves payment transactions.
-      tags:
-        - Payments
-      responses:
-        '200':
-          description: List of payments
-
 
 components:
   schemas:
-
     Product:
       type: object
-      description: Represents a product available for purchase.
       required:
-        - productId
-        - title
-        - categoryId
-        - price
-        - currency
-        - stock
-        - status
-        - createdAt
-      properties:
-        productId:
-          type: string
-          example: PROD-10001
-        title:
-          type: string
-          example: "Logitech MX Master 3 Wireless Mouse"
-        description:
-          type: string
-          example: "Advanced wireless mouse with ergonomic design"
-        categoryId:
-          type: integer
-          example: 101
-        brand:
-          type: string
-          example: Logitech
-        price:
-          type: number
-          example: 7999.00
-        currency:
-          type: string
-          example: INR
-        stock:
-          type: integer
-          example: 120
-        status:
-          type: string
-          enum:
-            - ACTIVE
-            - INACTIVE
-            - OUT_OF_STOCK
-          example: ACTIVE
-        rating:
-          type: number
-          example: 4.6
-        images:
-          type: array
-          items:
-            type: string
-        createdAt:
-          type: string
-          format: date-time
-          example: "2026-01-20T08:30:00Z"
-        updatedAt:
-          type: string
-          format: date-time
-          example: "2026-01-22T10:15:00Z"
-
-    User:
-      type: object
-      description: Represents a user in the delivery application.
-      required:
-        - userId
+        - id
         - name
-        - email
-        - role
-        - status
-        - createdAt
+        - price
       properties:
-
-        userId:
+        id:
           type: string
-          description: Unique identifier for the user
-          example: USER-10021
-
+          format: uuid
         name:
           type: string
-          example: Jimmy Patel
-
-        email:
+        description:
           type: string
-          format: email
-          example: jimmy@email.com
-
-        phone:
-          type: string
-          example: "+91-9876543210"
-
-        role:
-          type: string
-          description: Role assigned to the user
-          enum:
-            - CUSTOMER
-            - ADMIN
-            - RIDER
-          example: CUSTOMER
-
-        status:
-          type: string
-          description: Current user status
-          enum:
-            - ACTIVE
-            - INACTIVE
-            - BLOCKED
-          example: ACTIVE
-
-        addresses:
-          type: array
-          description: Saved delivery addresses
-          items:
-            type: object
-            required:
-              - addressId
-              - line1
-              - city
-              - state
-              - postalCode
-              - country
-            properties:
-              addressId:
-                type: string
-                example: ADDR-101
-              line1:
-                type: string
-                example: "21 MG Road"
-              line2:
-                type: string
-                example: "Near Alkapuri Circle"
-              city:
-                type: string
-                example: Vadodara
-              state:
-                type: string
-                example: Gujarat
-              postalCode:
-                type: string
-                example: "390001"
-              country:
-                type: string
-                example: IN
-              isDefault:
-                type: boolean
-                example: true
-
-        createdAt:
-          type: string
-          format: date-time
-          example: "2026-01-15T09:00:00Z"
-
-        updatedAt:
-          type: string
-          format: date-time
-          example: "2026-01-22T14:20:00Z"
-
-    Delivery:
-      type: object
-      required:
-        - deliveryId
-        - orderId
-        - riderId
-        - status
-        - createdAt
-      properties:
-        deliveryId:
-          type: string
-          example: DEL-1001
-        orderId:
-          type: string
-          example: ORD-10021
-        riderId:
-          type: string
-          example: RID-501
-        status:
-          type: string
-          enum:
-            - ASSIGNED
-            - PICKED_UP
-            - IN_TRANSIT
-            - DELIVERED
-            - FAILED
-          example: IN_TRANSIT
-        estimatedTime:
-          type: string
-          example: "30 mins"
-        createdAt:
-          type: string
-          format: date-time
-    
-    Payment:
-      type: object
-      required:
-        - paymentId
-        - orderId
-        - amount
-        - method
-        - status
-      properties:
-        paymentId:
-          type: string
-          example: PAY-9001
-        orderId:
-          type: string
-          example: ORD-10021
-        amount:
+        price:
           type: number
-          example: 1499.50
-        method:
+          minimum: 0
+        currency:
           type: string
-          enum:
-            - UPI
-            - CARD
-            - NET_BANKING
-            - COD
-        status:
+          default: USD
+        inStock:
+          type: boolean
+    
+    ProductInput:
+      type: object
+      required:
+        - name
+        - price
+      properties:
+        name:
           type: string
-          enum:
-            - PENDING
-            - PAID
-            - FAILED
-            - REFUNDED
+        description:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+  
+  parameters:
+    PageParam:
+      name: page
+      in: query
+      schema:
+        type: integer
+        default: 1
+    
+    LimitParam:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 20
+  
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
 
+security:
+  - BearerAuth: []
+```
+
+---
+
+## Best Practices
+
+1. **Use meaningful operation IDs** - Makes code generation easier
+2. **Reference reusable components** - Use `$ref` for schemas, parameters, responses
+3. **Add descriptions** - Document all fields, parameters, and operations
+4. **Include examples** - Help users understand expected data
+5. **Version your API** - Use semantic versioning
+6. **Use tags** - Organize operations logically
+7. **Define error responses** - Document all possible error codes
+8. **Specify required fields** - Make it clear what's mandatory
+9. **Use enums** - Constrain values where appropriate
+10. **Validate your spec** - Use tools like Swagger Editor
+
+---
+
+## Tools
+
+- **Swagger Editor** - Online editor with validation
+- **Swagger UI** - Interactive API documentation
+- **Redoc** - Alternative documentation renderer
+- **Postman** - Import OpenAPI specs for testing
+- **OpenAPI Generator** - Generate client/server code
+- **Spectral** - Linting tool for OpenAPI specs
+
+---
+
+## Resources
+
+- **OpenAPI Specification:** https://spec.openapis.org/oas/latest.html
+- **Swagger Tools:** https://swagger.io/tools/
+- **OpenAPI Initiative:** https://www.openapis.org/
